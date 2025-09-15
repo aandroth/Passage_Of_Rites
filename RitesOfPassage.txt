@@ -1,0 +1,24 @@
+Gameplay is three rites of passage where kobold youth become adults
+
+0. Trap Making - Grab three ingredients to make a wacky trap
+			   - Kobold cave workshop
+
+Features:
+	Stealing other player items
+	Grabbing item from Supply
+	Grabbed item refreshes
+	Each player is randomly assigned trap to make
+	Three items for each trap
+	Loop is player gets items from supply tables, and brings it to their table for completing traps
+	Most traps made is the winner
+
+
+
+1. Rat Catch - Lots of rats are running around the front entrance. Catch as many as you can before time runs out.
+			 - Entrance of the alchemist lair
+
+2. Flame Dodge - Move across the hallway while not getting hit by the flame/projectiles that shoot out.
+			   - Main hallway of the dungeon
+
+3. Alchemist Golem Boss Battle - Whack the golem with a stick and then make your mark on the wall.
+							   - Outside the door to the laboratory
