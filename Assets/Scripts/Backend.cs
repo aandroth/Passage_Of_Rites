@@ -7,11 +7,12 @@ using NativeWebSocket;
 using System.Threading.Tasks;
 using UnityEngine.Networking;
 using System.Collections;
+using System;
 
 public class Backend : MonoBehaviour
 {
-    public delegate void ReceivedMessageDelegate(string s);
-    public ReceivedMessageDelegate ReceivedMessage;
+    public delegate void ReceivedMessageForGameControllerDelegate(string s, string t, string[] p);
+    public ReceivedMessageForGameControllerDelegate ReceivedMessageForGameController;
     public delegate string GetPlayerDataDelegate();
     public GetPlayerDataDelegate GetPlayerData;
     public delegate void SetPlayerChangedDataToCurrentValuesDelegate();
@@ -20,7 +21,7 @@ public class Backend : MonoBehaviour
     public GetTextDataDelegate GetTextData;
 
     public string m_apiGatewayUrl = "https://t2lfwpskr0.execute-api.us-west-2.amazonaws.com/dev";
-    public string m_serverUrl = "18.237.4.137:5000";
+    public string m_serverUrl = "18.237.4.137"; // ws://localhost
     public WebSocket m_webSocket;
     public int m_webSocketConnectionAttemptsToTry = 3;
     public float intervalTimeCurr = 0f;
@@ -68,10 +69,17 @@ public class Backend : MonoBehaviour
     }
 
 
-    public IEnumerator RequestNewServer()
+    public void RequestNewServer(Action<string> callbackFn)
     {
+        StartCoroutine(RequestNewServerCoroutine(callbackFn));
+    }
+
+    public IEnumerator RequestNewServerCoroutine(Action<string> callbackFn)
+    {
+        Debug.Log($"Requesting new server at {m_apiGatewayUrl}");
         using (UnityWebRequest serverRequest = UnityWebRequest.Get(m_apiGatewayUrl))
         {
+            Debug.Log($"Request made");
             yield return serverRequest.SendWebRequest();
             string errorString = "There was an error? Of course there was an error. Why couldn't it just work!?\n- you, probably";
 
@@ -82,6 +90,7 @@ public class Backend : MonoBehaviour
                 case UnityWebRequest.Result.ProtocolError:
                     Debug.Log(errorString);
                     Debug.Log(serverRequest.result);
+                    m_serverUrl = "Bad Result";
                     break;
                 case UnityWebRequest.Result.Success:
                     m_serverUrl = serverRequest.downloadHandler.text;
@@ -89,6 +98,8 @@ public class Backend : MonoBehaviour
                     break;
             }
         }
+        Debug.Log($"Request finished");
+        callbackFn(m_serverUrl);
     }
 
     public void Update()
@@ -100,7 +111,7 @@ public class Backend : MonoBehaviour
         if (Input.GetKeyUp(KeyCode.I))
         {
             Debug.Log("Calling API Gateway");
-            StartCoroutine(RequestNewServer());
+            StartCoroutine(RequestNewServerCoroutine((str) => { Debug.Log($"API called from keystroke with result: {str}"); }));
         }
         if (Input.GetKeyUp(KeyCode.O))
         {
@@ -113,7 +124,7 @@ public class Backend : MonoBehaviour
             CancelConnection();
         }
 
-        if (m_connected)
+        if (m_connected && GetPlayerData != null)
         {
             intervalTimeCurr += Time.deltaTime;
             if (intervalTimeCurr >= intervalTime)
@@ -145,7 +156,7 @@ public class Backend : MonoBehaviour
 
     IEnumerator ReturnUrlResultCoroutine(string url)
     {
-        Debug.Log("ReturnUrlResultCoroutine");
+        Debug.Log($"ReturnUrlResultCoroutine to url {url}");
         UnityWebRequest uwr = UnityWebRequest.Get(url);
         yield return uwr.SendWebRequest();
 
@@ -164,7 +175,43 @@ public class Backend : MonoBehaviour
 
     public void CancelConnection()
     {
-        if(m_webSocket != null && m_connected)
+        if (m_webSocket != null && m_connected)
+        {
             m_webSocket.CancelConnection();
+        }
+        m_connected = false;
+    }
+
+    public void SendServerDataToGameController(string data, string action, string[] playerData)
+    {
+        if (ReceivedMessageForGameController == null)
+        {
+            Debug.LogError($"ReceivedMessageForGameController is null");
+            return;
+        }
+
+        ReceivedMessageForGameController(data, action, playerData);
+    }
+
+    public void ReceivedMessage(string raw_data)
+    {
+        string data = raw_data.Substring(1, raw_data.Length - 2);
+        string[] playerData = data.Split(',');
+        string action = playerData.Length > 0 ? playerData[0] : "Disconnect";
+        Debug.Log($"Received: {data} with action {action}");
+
+        switch (action)
+        {
+            case "Disconnect":
+                CancelConnection();
+                break;
+            case "Player":
+            case "NewPlayer":
+            case "Update":
+                SendServerDataToGameController(data, action, playerData);
+                break;
+            default:
+                break;
+        }
     }
 }

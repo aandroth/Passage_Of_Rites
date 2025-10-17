@@ -1,30 +1,39 @@
+using NUnit.Framework;
 using UnityEngine;
 
 public class WorkshopSupplyStationCircleCollider : MonoBehaviour
 {
-    public delegate void OnTriggerEnterDelegate();
-    public OnTriggerEnterDelegate m_onTriggerEnterDelegate;
-    public delegate void OnTriggerExitDelegate();
-    public OnTriggerExitDelegate m_onTriggerExitDelegate;
+    public delegate void OnPlayerEnterDelegate(PlayerSupplyItem playerSupplyItem);
+    public OnPlayerEnterDelegate m_onPlayerEnterDelegate;
+    public delegate void OnPlayerExitDelegate();
+    public OnPlayerExitDelegate m_onPlayerExitDelegate;
+    public delegate void OnMouseEnterDelegate();
+    public OnMouseEnterDelegate m_onMouseEnterDelegate;
+    public delegate void OnMouseExitDelegate();
+    public OnMouseExitDelegate m_onMouseExitDelegate;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
     public void OnTriggerEnter2D(Collider2D collision)
     {
-        Debug.Log("Trigger");
-        m_onTriggerEnterDelegate?.Invoke();
+        PlayerSupplyItem playerSupplyItem = collision.gameObject.GetComponent<PlayerSupplyItem>();
+        if (playerSupplyItem)
+        {
+            m_onPlayerEnterDelegate?.Invoke(playerSupplyItem);
+        }
+        else if(collision.gameObject.GetComponent<MouseFollowingCollider>())
+        {
+            m_onMouseEnterDelegate.Invoke();
+        }
     }
     public void OnTriggerExit2D(Collider2D collision)
     {
-        m_onTriggerExitDelegate?.Invoke();
+        PlayerSupplyItem playerSupplyItem = collision.gameObject.GetComponent<PlayerSupplyItem>();
+        if (playerSupplyItem)
+        {
+            m_onPlayerExitDelegate?.Invoke();
+        }
+        else if (collision.gameObject.GetComponent<MouseFollowingCollider>())
+        {
+            m_onMouseExitDelegate.Invoke();
+        }
     }
 }

@@ -16,7 +16,7 @@ public class GameController : MonoBehaviour
     {
         m_backend.GetPlayerData = GetPlayerChangedData;
         m_backend.SetPlayerChangedDataToCurrentValues = SetPlayerChangedDataToCurrentValues;
-        m_backend.ReceivedMessage = ReceivedMessage;
+        m_backend.ReceivedMessageForGameController = ReceivedMessage;
     }
 
     public void Update()
@@ -30,6 +30,11 @@ public class GameController : MonoBehaviour
             m_playersDict[int.Parse(playerData[1])].PutChangedData(playerData);
         //else
         //    CreateCharacter(false, id, playerData);
+    }
+
+    public void SetPlayerLocation(Vector3 position)
+    {
+        m_playersDict[m_playerId].transform.position = position;
     }
 
     public GameObject CreateCharacter(bool isPlayer, int id, string[] data)
@@ -63,11 +68,8 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void ReceivedMessage(string data)
+    public void ReceivedMessage(string data, string action, string[] playerData)
     {
-        data = data.Substring(1, data.Length-2);
-        string[] playerData = data.Split(',');
-        string action = playerData[0];
         int id = int.Parse(playerData[1]);
         Debug.Log($"Received: {data} with action {action} and id {id}");
 

@@ -21,12 +21,17 @@ public class WorkshopSupplyStation : Interactable
     public WorkshopSupplyStationCircleCollider m_supplyStationCircleCollider;
     public bool m_playerInRange = false;
 
+    private bool m_playerMouseInRange = false;
+    private PlayerSupplyItem m_playerSupplyItemInRange;
+
 
     public void Start()
     {
         m_supplyFrameAnimator.speed = 1f / M_TIME_TILL_USABLE_AGAIN + m_animatorSpeedSafetyMargin;
-        m_supplyStationCircleCollider.m_onTriggerEnterDelegate = PlayerMovesIntoRange;
-        m_supplyStationCircleCollider.m_onTriggerExitDelegate = PlayerMovesOutOfRange;
+        m_supplyStationCircleCollider.m_onPlayerEnterDelegate = PlayerMovesIntoRange;
+        m_supplyStationCircleCollider.m_onPlayerExitDelegate = PlayerMovesOutOfRange;
+        m_supplyStationCircleCollider.m_onMouseEnterDelegate = PlayerMouseMovesIntoRange;
+        m_supplyStationCircleCollider.m_onMouseExitDelegate = PlayerMouseMovesOutOfRange;
     }
 
 
@@ -59,13 +64,14 @@ public class WorkshopSupplyStation : Interactable
     public void SupplyTaken()
     {
         m_isUsable = false;
+        UnhighlightSupplyIfHighlighted();
         StartCoroutine(SupplyTakenCoroutine());
-        m_supplyFrameAnimator.enabled = true;
-        m_supplyFrameAnimator.Play(m_supplyFrameResetAnimationName);
     }
     public IEnumerator SupplyTakenCoroutine()
     {
         m_timeTillUsableCountdown = M_TIME_TILL_USABLE_AGAIN;
+        m_supplyFrameAnimator.enabled = true;
+        m_supplyFrameAnimator.Play(m_supplyFrameResetAnimationName);
         while (m_timeTillUsableCountdown > 0)
         {
             m_timeTillUsableCountdown -= Time.deltaTime;
@@ -84,10 +90,11 @@ public class WorkshopSupplyStation : Interactable
         return supplyNames.Contains(m_supplyStationResourceName);
     }
 
-    public void PlayerMovesIntoRange()
+    public void PlayerMovesIntoRange(PlayerSupplyItem playerSupplyItem)
     {
-        HighlightSupplyIfNeeded();
+        m_playerSupplyItemInRange = playerSupplyItem;
         m_playerInRange = true;
+        HighlightSupplyIfNeeded();
     }
     public void PlayerMovesOutOfRange()
     {
@@ -95,9 +102,20 @@ public class WorkshopSupplyStation : Interactable
         UnhighlightSupplyIfHighlighted();
     }
 
+    public void PlayerMouseMovesIntoRange()
+    {
+        m_playerMouseInRange = true;
+        HighlightSupplyIfNeeded();
+    }
+    public void PlayerMouseMovesOutOfRange()
+    {
+        m_playerMouseInRange = false;
+        UnhighlightSupplyIfHighlighted();
+    }
+
     public void HighlightSupplyIfNeeded()
     {
-        if (m_isUsable && m_supplyNeededByPlayer)
+        if (m_isUsable && m_playerMouseInRange && m_playerInRange && m_playerSupplyItemInRange != null && m_playerSupplyItemInRange.m_neededSuppliesList.Contains(m_supplyStationResourceName))
         {
             m_supplyFrameAnimator.Play("Idle");
             m_supplyFrameAnimator.enabled = false;

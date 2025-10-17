@@ -5,6 +5,8 @@ using Unity.VisualScripting;
 
 public class WorkshopGame : MonoBehaviour
 {
+    public delegate void SetPlayerLocation();
+    public SetPlayerLocation m_setPlayerLocation;
     public enum TrapType { NOTHING, FALLING_RATS, SWINGING_BLADE, SWINGING_SPIKE_LOG, SLIDE_INTO_SPIKES, RAT_ON_A_STICK, BURNING_OIL }
     public enum SupplyStationName { NOTHING, METAL, OIL, SPIKES, CARVING, ROCK, LOG, RATS, ROPE, SPRING }
     public SupplyStationName m_supplyStationNames = SupplyStationName.METAL;
@@ -16,6 +18,7 @@ public class WorkshopGame : MonoBehaviour
     public int m_playerScore = 0;
 
     public PlayerStation m_playerStation;
+    public List<Transform> m_playerStationLocations;
 
     public static Dictionary<TrapType, SupplyStationName[]> m_trapToSuppliesDict = new Dictionary<TrapType, SupplyStationName[]>();
     public static Dictionary<TrapType, string> m_trapToNameDict = new Dictionary<TrapType, string>();
@@ -66,30 +69,12 @@ public class WorkshopGame : MonoBehaviour
         AssignTrapToPlayerAndStation();
     }
 
-
-    void Update()
+    public void AssignAndMovePlayerToLocation(int locatinIndex)
     {
-        //if (Input.GetMouseButtonUp(0) && m_supplyStations.Count > 0)
-        //{
-        //    Vector3 screenPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        //    screenPoint.z = 0;
-        //    for(int i=0; i< m_playerStations.Count; ++i)
-        //    {
-        //        m_playerStations[i].m_reportSupplyCheckedOff = SupplyCheckedOff;
-        //        m_playerStations[i].m_reportTrapCompleted = TrapCompleted;
-        //    }
-        //    for(int i=0; i< m_supplyStations.Count; ++i)
-        //    {
-        //        if (Vector3.Distance(m_supplyStations[i].m_centerPoint.transform.position, screenPoint) < m_supplyStations[i].m_minMouseDistanceToCenter &&
-        //            m_supplyStations[i].m_playerInRange &&
-        //            m_supplyStations[i].SupplyNeededByPlayer(m_playerStation.m_neededSupplyItems))
-        //        {
-        //            var supplyImageAndName = SupplyStationUsed(i);
-        //            m_playerSupplyItem.ActivateAndSetSupplyItem(supplyImageAndName.Item1,
-        //                                                        supplyImageAndName.Item2);
-        //        }
-        //    }
-        //}
+        m_playerStation.transform.position = m_playerStationLocations[locatinIndex].transform.position;
+        m_playerStationLocations[locatinIndex].gameObject.SetActive(false);
+        
+
     }
 
     public void AssignTrapToPlayerAndStation()
@@ -106,5 +91,11 @@ public class WorkshopGame : MonoBehaviour
 
         if (m_trapsToComplete.Count > 0)
             AssignTrapToPlayerAndStation();
+        else
+        {
+            foreach (var name in m_trapToSuppliesDict.Keys)
+                m_trapsToComplete.Add(name);
+            AssignTrapToPlayerAndStation();
+        }
     }
 }

@@ -1,6 +1,14 @@
-Gameplay is three rites of passage where kobold youth become adults
+Gameplay is four rites of passage where kobold youth become adults
 
-0. Trap Making - Grab three ingredients to make a wacky trap
+0: Title Scene
+
+Making it so the backend script can take more than just actions for the GameController
+
+It can successfully call the AWS to make a server, and connect to that server!
+
+
+
+1. Trap Making - Grab three ingredients to make a wacky trap
 			   - Kobold cave workshop
 
 Features:
@@ -14,11 +22,26 @@ Features:
 
 
 
-1. Rat Catch - Lots of rats are running around the front entrance. Catch as many as you can before time runs out.
+2. Rat Catch - Lots of rats are running around the front entrance. Catch as many as you can before time runs out.
 			 - Entrance of the alchemist lair
 
-2. Flame Dodge - Move across the hallway while not getting hit by the flame/projectiles that shoot out.
+3. Flame Dodge - Move across the hallway while not getting hit by the flame/projectiles that shoot out.
 			   - Main hallway of the dungeon
 
-3. Alchemist Golem Boss Battle - Whack the golem with a stick and then make your mark on the wall.
+4. Alchemist Golem Boss Battle - Whack the golem with a stick and then make your mark on the wall.
 							   - Outside the door to the laboratory
+
+
+Backend
+///////////////////////////////////////////
+
+Need to write Lambda fn to kill server when no players for one minute or game ends
+	Access by server through API Gateway
+	Lambda Fn
+		Gets the arn of the container
+			How to get this? Maybe save arn or other identifier to container (in the javascript of the backend itself)? Set an environment variable?
+		Runs the StopTaskCommand w/ the container arn as a target
+
+	Maybe I can just use clearInterval(refreshIntervalId);
+		Let the program exit, and then that will kill the task as well? 
+		
