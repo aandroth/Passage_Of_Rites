@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ public class PlayerControls : MonoBehaviour
     public TMPro.TextMeshPro m_nameTextMesh;
     public GameObject m_playerSprite;
     public Animator m_animator;
+    public Animator m_animatorStatusEffect;
     public string m_walkCycleName;
     public string m_idleCycleName;
     public Vector2 m_position;
@@ -21,7 +23,7 @@ public class PlayerControls : MonoBehaviour
     public char m_testingMovement = ' ';
     public CircleCollider2D m_circleCollider;
 
-    public enum PLAYER_STATE {IDLE, MOVING}
+    public enum PLAYER_STATE {IDLE, MOVING, DAZED}
     public PLAYER_STATE m_state = PLAYER_STATE.IDLE;
 
     public PlayerSupplyItem m_playerSupplyItem;
@@ -47,27 +49,30 @@ public class PlayerControls : MonoBehaviour
     {
         if (m_isPlayer)
         {
-            m_isMoving = false;
-            if (Input.GetKey(KeyCode.A) || m_testingMovement == 'A')
+            if (m_state != PLAYER_STATE.DAZED)
             {
-                MoveLeftRight(-1);
-            }
-            else if (Input.GetKey(KeyCode.D) || m_testingMovement == 'D')
-            {
-                MoveLeftRight(1);
-            }
-            if (Input.GetKey(KeyCode.W) || m_testingMovement == 'W')
-            {
-                MoveUpDown(1);
-            }
-            else if (Input.GetKey(KeyCode.S) || m_testingMovement == 'S')
-            {
-                MoveUpDown(-1);
-            }
+                m_isMoving = false;
+                if (Input.GetKey(KeyCode.A) || m_testingMovement == 'A')
+                {
+                    MoveLeftRight(-1);
+                }
+                else if (Input.GetKey(KeyCode.D) || m_testingMovement == 'D')
+                {
+                    MoveLeftRight(1);
+                }
+                if (Input.GetKey(KeyCode.W) || m_testingMovement == 'W')
+                {
+                    MoveUpDown(1);
+                }
+                else if (Input.GetKey(KeyCode.S) || m_testingMovement == 'S')
+                {
+                    MoveUpDown(-1);
+                }
 
-            if (!m_isMoving && m_state == PLAYER_STATE.MOVING)
-            {
-                MoveStop();
+                if (!m_isMoving && m_state == PLAYER_STATE.MOVING)
+                {
+                    MoveStop();
+                }
             }
         }
     }
@@ -227,6 +232,33 @@ public class PlayerControls : MonoBehaviour
                             float.Parse(color[1]),
                             float.Parse(color[2]));
         m_playerSprite.GetComponent<SpriteRenderer>().color = m_color;
+    }
+
+    public void Dazed(float timeDazed = 1f)
+    {
+        StartCoroutine(DazedCoroutine(timeDazed));
+    }
+
+    public IEnumerator DazedCoroutine(float timeDazed = 1f)
+    {
+        m_animatorStatusEffect.gameObject.SetActive(true);
+        m_animatorStatusEffect.Play("Dazed");
+        m_animator.speed = 0;
+        while (timeDazed > 0)
+        {
+            timeDazed -= Time.deltaTime;
+            yield return null;
+        }
+
+        m_state = PLAYER_STATE.IDLE;
+        m_animatorStatusEffect.StopPlayback();
+        m_animatorStatusEffect.gameObject.SetActive(false);
+        m_animator.speed = 1;
+    }
+
+    public void Victory()
+    {
+
     }
 
     public void DestroySelf()

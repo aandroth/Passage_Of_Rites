@@ -1,4 +1,4 @@
-Gameplay is four rites of passage where kobold youth become adults
+Gameplay is four rites of passage where kobold youth pass trials to become adults
 
 0: Title Scene
 
@@ -19,6 +19,7 @@ Features:
 	Three items for each trap
 	Loop is player gets items from supply tables, and brings it to their table for completing traps
 	Most traps made is the winner
+	Show scoreboard
 
 
 

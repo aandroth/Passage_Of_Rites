@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using UnityEngine.Networking;
 using System.Collections;
 using System;
+using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 public class Backend : MonoBehaviour
 {
@@ -21,7 +22,8 @@ public class Backend : MonoBehaviour
     public GetTextDataDelegate GetTextData;
 
     public string m_apiGatewayUrl = "https://t2lfwpskr0.execute-api.us-west-2.amazonaws.com/dev";
-    public string m_serverUrl = "18.237.4.137"; // ws://localhost
+    public string m_serverUrl = "localhost"; //"18.237.4.137";
+    public string[] m_serverUrlList = new string[0];
     public WebSocket m_webSocket;
     public int m_webSocketConnectionAttemptsToTry = 3;
     public float intervalTimeCurr = 0f;
@@ -30,6 +32,27 @@ public class Backend : MonoBehaviour
     public string urlResult;
     //public string m_defaultUrl = "localhost:3000/hello";
 
+    public static Backend Instance { get; private set; }
+
+    private void Awake()
+    {
+        // If there is an instance, and it's not me, delete myself.
+        if (Instance != null && Instance != this)
+            Destroy(this);
+        else
+            Instance = this;
+    }
+
+    public class JsonClassList
+    {
+        public string statusCode;
+        public string[] body;
+    }
+    public class JsonClassSingle
+    {
+        public string statusCode;
+        public string body;
+    }
     public async void StartWebSocketConnection()
     {
         m_webSocket = new WebSocket($"ws://{m_serverUrl}:5000");
@@ -76,8 +99,8 @@ public class Backend : MonoBehaviour
 
     public IEnumerator RequestNewServerCoroutine(Action<string> callbackFn)
     {
-        Debug.Log($"Requesting new server at {m_apiGatewayUrl}");
-        using (UnityWebRequest serverRequest = UnityWebRequest.Get(m_apiGatewayUrl))
+        Debug.Log($"Requesting new server at {m_apiGatewayUrl}/CreateGame");
+        using (UnityWebRequest serverRequest = UnityWebRequest.Get(m_apiGatewayUrl + "/CreateGame"))
         {
             Debug.Log($"Request made");
             yield return serverRequest.SendWebRequest();
@@ -93,13 +116,81 @@ public class Backend : MonoBehaviour
                     m_serverUrl = "Bad Result";
                     break;
                 case UnityWebRequest.Result.Success:
-                    m_serverUrl = serverRequest.downloadHandler.text;
+                    var data = JsonUtility.FromJson<JsonClassSingle>(serverRequest.downloadHandler.text);
+                    m_serverUrl = data.body;
+                    //m_serverUrl = serverRequest.downloadHandler.text;
                     Debug.Log($"RequestNewServer SUCCESS: {(m_serverUrl)}");
                     break;
             }
         }
         Debug.Log($"Request finished");
         callbackFn(m_serverUrl);
+    }
+    
+
+    public void RequestListOfServers(Action<string[]> callbackFn)
+    {
+        StartCoroutine(RequestListOfServersCoroutine(callbackFn));
+    }
+
+    public IEnumerator RequestListOfServersCoroutine(Action<string[]> callbackFn)
+    {
+        Debug.Log($"Requesting all existing servers at {m_apiGatewayUrl}/ListGames");
+        using (UnityWebRequest serverRequest = UnityWebRequest.Get(m_apiGatewayUrl + "/ListGames"))
+        {
+            Debug.Log($"Request made");
+            yield return serverRequest.SendWebRequest();
+            string errorString = "There was an error? Of course there was an error. Why couldn't it just work!?\n- you, probably";
+            string serverResultString = "";
+            switch (serverRequest.result)
+            {
+                case UnityWebRequest.Result.ConnectionError:
+                case UnityWebRequest.Result.DataProcessingError:
+                case UnityWebRequest.Result.ProtocolError:
+                    Debug.Log(errorString);
+                    Debug.Log(serverRequest.result);
+                    serverResultString = "Bad Result";
+                    break;
+                case UnityWebRequest.Result.Success:
+                    var data = JsonUtility.FromJson<JsonClassList>(serverRequest.downloadHandler.text);
+                    Debug.Log($"RequestListOfServers SUCCESS: {(m_serverUrl)}, {data.body.Length}");
+                    callbackFn(data.body);
+                    break;
+            }
+        }
+        Debug.Log($"Request finished");
+    }
+
+
+    public void RequestKillServer()
+    {
+        StartCoroutine(RequestKillServerCoroutine());
+    }
+
+    public IEnumerator RequestKillServerCoroutine()
+    {
+        Debug.Log($"Requesting kill server at {m_apiGatewayUrl}/KillGame");
+        using (UnityWebRequest serverRequest = UnityWebRequest.Get(m_apiGatewayUrl + "/KillGame"))
+        {
+            Debug.Log($"Request made");
+            yield return serverRequest.SendWebRequest();
+            string errorString = "There was an error? Of course there was an error. Why couldn't it just work!?\n- you, probably";
+            string serverResultString = "";
+            switch (serverRequest.result)
+            {
+                case UnityWebRequest.Result.ConnectionError:
+                case UnityWebRequest.Result.DataProcessingError:
+                case UnityWebRequest.Result.ProtocolError:
+                    Debug.Log(errorString);
+                    Debug.Log(serverRequest.result);
+                    serverResultString = "Bad Result";
+                    break;
+                case UnityWebRequest.Result.Success:
+                    Debug.Log($"RequestListOfServers SUCCESS: {(m_serverUrl)}");
+                    break;
+            }
+        }
+        Debug.Log($"Request finished");
     }
 
     public void Update()
@@ -213,5 +304,10 @@ public class Backend : MonoBehaviour
             default:
                 break;
         }
+    }
+
+    public void SetServerUrl(string url)
+    {
+        m_serverUrl = url;
     }
 }
