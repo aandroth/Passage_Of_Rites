@@ -32,7 +32,7 @@ public class TESTING : MonoBehaviour
         Assert.IsNotNull(m_gameController.m_playersDict[goPlayer.GetComponent<PlayerControls>().m_id]);
 
         // Check AllData
-        Assert.AreEqual(goPlayer.GetComponent<PlayerControls>().GetAllData(), "Update,0,5,5,1,0");
+        Assert.AreEqual(goPlayer.GetComponent<PlayerControls>().GetChangablelData(), "Update,0,5,5,1,0");
 
         GameObject goOther = m_gameController.CreateCharacter(false, 1, m_createCharTest.Split(','));
         Assert.IsNotNull(goOther);
@@ -108,7 +108,7 @@ public class TESTING : MonoBehaviour
         Assert.AreNotEqual(m_gameController.GetPlayerChangedData(), "Unchanged");
         Assert.IsTrue(goPlayer.transform.position.y < yPositionPlayer);
         yield return new WaitForSeconds(1);
-        Assert.AreEqual(goPlayer.GetComponent<PlayerControls>().GetAllData(), $"Update,0,{goPlayer.transform.position.x},{goPlayer.transform.position.y},-1,0");
+        Assert.AreEqual(goPlayer.GetComponent<PlayerControls>().GetChangablelData(), $"Update,0,{goPlayer.transform.position.x},{goPlayer.transform.position.y},-1,0");
 
 
         yield return new WaitForSeconds(5);

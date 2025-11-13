@@ -43,8 +43,8 @@ public class WorkshopGame_Testing : MonoBehaviour
         Assert.True(m_station.isActiveAndEnabled);
 
         Debug.Log("Testing interaction");
-        Assert.AreEqual(WorkshopGame.SupplyStationName.NOTHING, m_station.Interact(WorkshopGame.SupplyStationName.NOTHING, new List<WorkshopGame.SupplyStationName>() { WorkshopGame.SupplyStationName.METAL }));
-        Assert.AreEqual(WorkshopGame.SupplyStationName.ROPE, m_station.Interact(WorkshopGame.SupplyStationName.NOTHING, new List<WorkshopGame.SupplyStationName>() { WorkshopGame.SupplyStationName.ROPE }));
+        Assert.AreEqual(WorkshopGame.SupplyItemName.NOTHING, m_station.Interact(WorkshopGame.SupplyItemName.NOTHING, new List<WorkshopGame.SupplyItemName>() { WorkshopGame.SupplyItemName.METAL }));
+        Assert.AreEqual(WorkshopGame.SupplyItemName.ROPE, m_station.Interact(WorkshopGame.SupplyItemName.NOTHING, new List<WorkshopGame.SupplyItemName>() { WorkshopGame.SupplyItemName.ROPE }));
         Assert.False(m_station.m_isUsable);
 
         Debug.Log("Testing m_isUsable and sprite");
@@ -76,7 +76,7 @@ public class WorkshopGame_Testing : MonoBehaviour
 
         m_playerSupplyItem.transform.position = Vector3.zero;
 
-        Assert.AreEqual(WorkshopGame.SupplyStationName.NOTHING, m_playerSupplyItem.m_supplyName);
+        Assert.AreEqual(WorkshopGame.SupplyItemName.NOTHING, m_playerSupplyItem.m_supplyStationResourceName);
         m_playerSupplyItem.transform.position = m_station.transform.position;
         m_playerSupplyItem.m_mouseColliderFrozen = true;
         m_playerSupplyItem.m_mouseFollowingCollider.transform.position = m_station.transform.position;
@@ -86,7 +86,7 @@ public class WorkshopGame_Testing : MonoBehaviour
         m_playerSupplyItem.ExecuteInteraction();
         yield return new WaitForSeconds(0.1f);
         Assert.False(m_station.m_isUsable);
-        Assert.AreEqual(WorkshopGame.SupplyStationName.ROPE, m_playerSupplyItem.m_supplyName);
+        Assert.AreEqual(WorkshopGame.SupplyItemName.ROPE, m_playerSupplyItem.m_supplyStationResourceName);
         Debug.Log("PlayerSupplyItem tests Passed");
     }
 

@@ -9,7 +9,7 @@ public class WorkshopSupplyStation : Interactable
     public const float M_TIME_TILL_USABLE_AGAIN = 5f;
     public float m_timeTillUsableCountdown = 0, m_animatorSpeedSafetyMargin = 0.1f;
     public bool m_isUsable = true, m_supplyNeededByPlayer = false;
-    public WorkshopGame.SupplyStationName m_supplyStationResourceName = WorkshopGame.SupplyStationName.METAL;
+    public WorkshopGame.SupplyItemName m_supplyStationResourceName = WorkshopGame.SupplyItemName.METAL;
     public SpriteRenderer m_supplyImageRenderer, m_frameSpriteRenderer;
     public Sprite m_supplyFrameHighlightSprite, m_supplyFrameDefaultSprite;
     public Animator m_supplyFrameAnimator;
@@ -35,7 +35,7 @@ public class WorkshopSupplyStation : Interactable
     }
 
 
-    public override SupplyStationName Interact(SupplyStationName supplyHeld = SupplyStationName.NOTHING, List<SupplyStationName> suppliesNeeded = null)
+    public override SupplyItemName Interact(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
     {
         if (m_isUsable && suppliesNeeded.Contains(m_supplyStationResourceName))
         {
@@ -43,11 +43,11 @@ public class WorkshopSupplyStation : Interactable
             return m_supplyStationResourceName;
         }
         else
-            return SupplyStationName.NOTHING;
+            return SupplyItemName.NOTHING;
     }
-    public override bool PlayerCanInteract(SupplyStationName supplyHeld = SupplyStationName.NOTHING, List<SupplyStationName> suppliesNeeded = null)
+    public override bool PlayerCanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
     {
-        return (m_isUsable && suppliesNeeded.Contains(m_supplyStationResourceName) && supplyHeld == SupplyStationName.NOTHING);
+        return (m_isUsable && suppliesNeeded.Contains(m_supplyStationResourceName) && supplyHeld == SupplyItemName.NOTHING);
     }
 
     public override Vector3 GetCenterPoint()
@@ -55,7 +55,7 @@ public class WorkshopSupplyStation : Interactable
         return m_centerPoint.transform.position;
     }
 
-    public void SetSupply(WorkshopGame.SupplyStationName supplyName, Sprite supplySprite)
+    public void SetSupply(WorkshopGame.SupplyItemName supplyName, Sprite supplySprite)
     {
         m_supplyStationResourceName = supplyName;
         m_supplyImageRenderer.sprite = supplySprite;
@@ -85,7 +85,7 @@ public class WorkshopSupplyStation : Interactable
         if (m_playerInRange)
             HighlightSupplyIfNeeded();
     }
-    public bool SupplyNeededByPlayer(List<WorkshopGame.SupplyStationName> supplyNames)
+    public bool SupplyNeededByPlayer(List<WorkshopGame.SupplyItemName> supplyNames)
     {
         return supplyNames.Contains(m_supplyStationResourceName);
     }

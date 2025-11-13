@@ -3,13 +3,12 @@ using UnityEngine;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 
-public class WorkshopGame : MonoBehaviour
+public class WorkshopGame : Game
 {
     public delegate void SetPlayerLocation();
-    public SetPlayerLocation m_setPlayerLocation;
     public enum TrapType { NOTHING, FALLING_RATS, SWINGING_BLADE, SWINGING_SPIKE_LOG, SLIDE_INTO_SPIKES, RAT_ON_A_STICK, BURNING_OIL }
-    public enum SupplyStationName { NOTHING, METAL, OIL, SPIKES, CARVING, ROCK, LOG, RATS, ROPE, SPRING }
-    public SupplyStationName m_supplyStationNames = SupplyStationName.METAL;
+    public enum SupplyItemName { NOTHING, METAL, OIL, SPIKES, CARVING, ROCK, LOG, RATS, ROPE, SPRING }
+    public SupplyItemName m_supplyItemNames = SupplyItemName.METAL;
     public List<WorkshopSupplyStation> m_supplyStations = new List<WorkshopSupplyStation>();
     public List<GameObject> m_supplyStationObjects;
     public List<PlayerStation> m_playerStations;
@@ -18,24 +17,25 @@ public class WorkshopGame : MonoBehaviour
     public int m_playerScore = 0;
 
     public PlayerStation m_playerStation;
-    public List<Transform> m_playerStationLocations;
+    public List<Transform> m_playerSpawnLocations;
+    public static List<Transform> m_playerTableLocations;
 
-    public static Dictionary<TrapType, SupplyStationName[]> m_trapToSuppliesDict = new Dictionary<TrapType, SupplyStationName[]>();
+    public static Dictionary<TrapType, SupplyItemName[]> m_trapToSuppliesDict = new Dictionary<TrapType, SupplyItemName[]>();
     public static Dictionary<TrapType, string> m_trapToNameDict = new Dictionary<TrapType, string>();
     public static Dictionary<WorkshopGame.TrapType, Sprite> m_trapToSpriteDict = new Dictionary<TrapType, Sprite>();
-    public static Dictionary<WorkshopGame.SupplyStationName, Sprite> m_nameToSpriteDict = new Dictionary<SupplyStationName, Sprite>();
+    public static Dictionary<WorkshopGame.SupplyItemName, Sprite> m_nameToSpriteDict = new Dictionary<SupplyItemName, Sprite>();
     public List<TrapType> m_trapsToComplete = new List<TrapType>();
     public List<Sprite> m_trapSprites = new List<Sprite>();
     public List<Sprite> m_supplySprites = new List<Sprite>();
 
     private void Start()
     {
-        m_trapToSuppliesDict[WorkshopGame.TrapType.FALLING_RATS]         = new SupplyStationName[] { SupplyStationName.SPRING, SupplyStationName.RATS, SupplyStationName.ROCK};
-        m_trapToSuppliesDict[WorkshopGame.TrapType.SWINGING_BLADE]       = new SupplyStationName[] { SupplyStationName.CARVING, SupplyStationName.METAL, SupplyStationName.ROPE};
-        m_trapToSuppliesDict[WorkshopGame.TrapType.SWINGING_SPIKE_LOG]   = new SupplyStationName[] { SupplyStationName.LOG, SupplyStationName.SPIKES, SupplyStationName.ROPE};
-        m_trapToSuppliesDict[WorkshopGame.TrapType.SLIDE_INTO_SPIKES]    = new SupplyStationName[] { SupplyStationName.SPIKES, SupplyStationName.OIL, SupplyStationName.METAL};
-        m_trapToSuppliesDict[WorkshopGame.TrapType.RAT_ON_A_STICK]       = new SupplyStationName[] { SupplyStationName.RATS, SupplyStationName.CARVING, SupplyStationName.LOG};
-        m_trapToSuppliesDict[WorkshopGame.TrapType.BURNING_OIL]          = new SupplyStationName[] { SupplyStationName.OIL, SupplyStationName.ROCK, SupplyStationName.SPRING};
+        m_trapToSuppliesDict[WorkshopGame.TrapType.FALLING_RATS]         = new SupplyItemName[] { SupplyItemName.SPRING, SupplyItemName.RATS, SupplyItemName.ROCK};
+        m_trapToSuppliesDict[WorkshopGame.TrapType.SWINGING_BLADE]       = new SupplyItemName[] { SupplyItemName.CARVING, SupplyItemName.METAL, SupplyItemName.ROPE};
+        m_trapToSuppliesDict[WorkshopGame.TrapType.SWINGING_SPIKE_LOG]   = new SupplyItemName[] { SupplyItemName.LOG, SupplyItemName.SPIKES, SupplyItemName.ROPE};
+        m_trapToSuppliesDict[WorkshopGame.TrapType.SLIDE_INTO_SPIKES]    = new SupplyItemName[] { SupplyItemName.SPIKES, SupplyItemName.OIL, SupplyItemName.METAL};
+        m_trapToSuppliesDict[WorkshopGame.TrapType.RAT_ON_A_STICK]       = new SupplyItemName[] { SupplyItemName.RATS, SupplyItemName.CARVING, SupplyItemName.LOG};
+        m_trapToSuppliesDict[WorkshopGame.TrapType.BURNING_OIL]          = new SupplyItemName[] { SupplyItemName.OIL, SupplyItemName.ROCK, SupplyItemName.SPRING};
 
         m_trapToNameDict[WorkshopGame.TrapType.FALLING_RATS]         = "Falling Rats";
         m_trapToNameDict[WorkshopGame.TrapType.SWINGING_BLADE]       = "Swinging Blade";
@@ -52,15 +52,15 @@ public class WorkshopGame : MonoBehaviour
         m_trapToSpriteDict[WorkshopGame.TrapType.BURNING_OIL]          = m_trapSprites[5];
 
 
-        m_nameToSpriteDict[WorkshopGame.SupplyStationName.METAL]   = m_supplySprites[0];
-        m_nameToSpriteDict[WorkshopGame.SupplyStationName.OIL]     = m_supplySprites[1];
-        m_nameToSpriteDict[WorkshopGame.SupplyStationName.SPIKES]  = m_supplySprites[2];
-        m_nameToSpriteDict[WorkshopGame.SupplyStationName.CARVING] = m_supplySprites[3];
-        m_nameToSpriteDict[WorkshopGame.SupplyStationName.ROCK]    = m_supplySprites[4];
-        m_nameToSpriteDict[WorkshopGame.SupplyStationName.LOG]     = m_supplySprites[5];
-        m_nameToSpriteDict[WorkshopGame.SupplyStationName.RATS]    = m_supplySprites[6];
-        m_nameToSpriteDict[WorkshopGame.SupplyStationName.ROPE]    = m_supplySprites[7];
-        m_nameToSpriteDict[WorkshopGame.SupplyStationName.SPRING]  = m_supplySprites[8];
+        m_nameToSpriteDict[WorkshopGame.SupplyItemName.METAL]   = m_supplySprites[0];
+        m_nameToSpriteDict[WorkshopGame.SupplyItemName.OIL]     = m_supplySprites[1];
+        m_nameToSpriteDict[WorkshopGame.SupplyItemName.SPIKES]  = m_supplySprites[2];
+        m_nameToSpriteDict[WorkshopGame.SupplyItemName.CARVING] = m_supplySprites[3];
+        m_nameToSpriteDict[WorkshopGame.SupplyItemName.ROCK]    = m_supplySprites[4];
+        m_nameToSpriteDict[WorkshopGame.SupplyItemName.LOG]     = m_supplySprites[5];
+        m_nameToSpriteDict[WorkshopGame.SupplyItemName.RATS]    = m_supplySprites[6];
+        m_nameToSpriteDict[WorkshopGame.SupplyItemName.ROPE]    = m_supplySprites[7];
+        m_nameToSpriteDict[WorkshopGame.SupplyItemName.SPRING]  = m_supplySprites[8];
 
         foreach (var name in m_trapToSuppliesDict.Keys)
             m_trapsToComplete.Add(name);
@@ -69,12 +69,12 @@ public class WorkshopGame : MonoBehaviour
         AssignTrapToPlayerAndStation();
     }
 
-    public void AssignAndMovePlayerToLocation(int locatinIndex)
+    public static Vector3 GetSpawnLocationForId(int id)
     {
-        m_playerStation.transform.position = m_playerStationLocations[locatinIndex].transform.position;
-        m_playerStationLocations[locatinIndex].gameObject.SetActive(false);
-        
+        //if(id < 0 || id > m_playerSpawnLocations.Count)
+            return Vector3.zero;
 
+        //return m_playerSpawnLocations[id].position;
     }
 
     public void AssignTrapToPlayerAndStation()

@@ -3,11 +3,11 @@ using System.Linq;
 using UnityEngine;
 using static WorkshopGame;
 
-public class PlayerSupplyItem : MonoBehaviour
+public class PlayerSupplyItem : MonoBehaviour, IAccessibleSupplyItem
 {
     public SpriteRenderer m_supplyCarriedSpriteRenderer;
-    public SupplyStationName m_supplyName;
-    public List<SupplyStationName> m_neededSuppliesList;
+    public SupplyItemName m_supplyStationResourceName;
+    public List<SupplyItemName> m_neededSuppliesList;
 
     List<Interactable> m_interactablesInRangeAndMouseFocus = new List<Interactable>();
     public List<Interactable> m_interactablesInRange = new List<Interactable>();
@@ -52,7 +52,7 @@ public class PlayerSupplyItem : MonoBehaviour
         if (m_interactablesInRangeAndMouseFocus.Count > 0)
         {
             Interactable closestInteractable = GetClosestInteractableFromInteractablesList();
-            if (closestInteractable.PlayerCanInteract(m_supplyName, m_neededSuppliesList))
+            if (closestInteractable.PlayerCanInteract(m_supplyStationResourceName, m_neededSuppliesList))
             {
                 InteractWithClosestInteractable(closestInteractable);
             }
@@ -96,27 +96,27 @@ public class PlayerSupplyItem : MonoBehaviour
     public void InteractWithClosestInteractable(Interactable closestInteractable)
     {
         if(closestInteractable.m_isSupplier)
-            ActivateAndSetSupplyItem(closestInteractable.Interact(m_supplyName, m_neededSuppliesList));
+            ActivateAndSetSupplyItem(closestInteractable.Interact(m_supplyStationResourceName, m_neededSuppliesList));
         else
         {
-            closestInteractable.Interact(m_supplyName);
-            if(m_neededSuppliesList.Contains(m_supplyName))
-                m_neededSuppliesList[m_neededSuppliesList.IndexOf(m_supplyName)] = SupplyStationName.NOTHING;
+            closestInteractable.Interact(m_supplyStationResourceName);
+            if(m_neededSuppliesList.Contains(m_supplyStationResourceName))
+                m_neededSuppliesList[m_neededSuppliesList.IndexOf(m_supplyStationResourceName)] = SupplyItemName.NOTHING;
             DeactivateAndRemoveSupplyItem();
         }
     }
 
-    public void ActivateAndSetSupplyItem(SupplyStationName supplyName)
+    public void ActivateAndSetSupplyItem(SupplyItemName supplyName)
     {
         m_supplyCarriedSpriteRenderer.gameObject.SetActive(true);
         m_supplyCarriedSpriteRenderer.sprite = m_nameToSpriteDict[supplyName];
-        m_supplyName = supplyName;
+        m_supplyStationResourceName = supplyName;
     }
     public void DeactivateAndRemoveSupplyItem()
     {
         Debug.Log("DeactivateAndRemoveSupplyItem");
         m_supplyCarriedSpriteRenderer.sprite = default;
-        m_supplyName = SupplyStationName.NOTHING;
+        m_supplyStationResourceName = SupplyItemName.NOTHING;
         m_supplyCarriedSpriteRenderer.gameObject.SetActive(false);
     }
 
@@ -138,5 +138,16 @@ public class PlayerSupplyItem : MonoBehaviour
             m_interactablesInRange.Remove(interactable);
             RemoveInteractableIfInFocusList(collision.gameObject.GetComponent<Interactable>());
         }
+    }
+    public WorkshopGame.SupplyItemName GetSupplyItemName()
+    {
+        return m_supplyStationResourceName;
+    }
+    public void SetSupplyItem(WorkshopGame.SupplyItemName supplyItemName)
+    {
+        if(supplyItemName != WorkshopGame.SupplyItemName.NOTHING)
+            ActivateAndSetSupplyItem(supplyItemName);
+        else
+            DeactivateAndRemoveSupplyItem();
     }
 }

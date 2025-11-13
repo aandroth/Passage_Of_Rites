@@ -3,14 +3,21 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class GameController : MonoBehaviour 
+public class GameController : MonoBehaviour
 {
+    [SerializeField]
+    BlackoutPanel m_blackoutPanel;
     public float m_pullChangedDataInterval;
     public Dictionary<int, PlayerControls> m_playersDict = new Dictionary<int, PlayerControls>();
     public GameObject m_playerPrefab;
-    public int m_playerId = -1;
+    public int m_mainPlayerId = -1;
 
     public Backend m_backend;
+
+    public void OnAwake()
+    {
+        m_blackoutPanel.StartFadeOut();
+    }
 
     public void Start()
     {
@@ -34,37 +41,40 @@ public class GameController : MonoBehaviour
 
     public void SetPlayerLocation(Vector3 position)
     {
-        m_playersDict[m_playerId].transform.position = position;
+        m_playersDict[m_mainPlayerId].transform.position = position;
     }
 
-    public GameObject CreateCharacter(bool isPlayer, int id, string[] data)
+    public GameObject CreateCharacter(bool isMainPlayer, int id, string[] data)
     {
-        GameObject go = GameObject.Instantiate(m_playerPrefab, Vector3.zero, Quaternion.identity);
+        Vector3 spawnPosition = WorkshopGame.GetSpawnLocationForId(id);
+
+        GameObject go = GameObject.Instantiate(m_playerPrefab, spawnPosition, Quaternion.identity);
         go.GetComponent<PlayerControls>().m_id = id;
+        go.GetComponent<PlayerControls>().m_isMainPlayer = isMainPlayer;
+        go.GetComponent<PlayerControls>().SetPlayerAsMainOrOther(isMainPlayer);
         go.GetComponent<PlayerControls>().PutAllData(data);
-        go.GetComponent<PlayerControls>().m_isPlayer = isPlayer;
         m_playersDict[id] = go.GetComponent<PlayerControls>();
-        m_playerId = isPlayer ? id : m_playerId;
+        m_mainPlayerId = isMainPlayer ? id : m_mainPlayerId;
         Debug.Log($"{go.GetComponent<PlayerControls>().m_nameTextMesh.text} created");
         return go;
     }
 
     public string GetPlayerChangedData()
     {
-        return m_playerId == -1 ? "" : m_playersDict[m_playerId].GetChangedData();
+        return m_mainPlayerId == -1 ? "" : m_playersDict[m_mainPlayerId].GetChangedData();
     }
     public void SetPlayerChangedDataToCurrentValues()
     {
-        if(m_playerId != -1) m_playersDict[m_playerId].SetChangedDataToCurrentValues();
+        if(m_mainPlayerId != -1) m_playersDict[m_mainPlayerId].SetChangedDataToCurrentValues();
     }
 
     public void DestroyPlayer()
     {
-        if(m_playerId != -1)
+        if(m_mainPlayerId != -1)
         {
-            m_playersDict[m_playerId].DestroySelf();
-            m_playersDict.Remove(m_playerId);
-            m_playerId = -1;
+            m_playersDict[m_mainPlayerId].DestroySelf();
+            m_playersDict.Remove(m_mainPlayerId);
+            m_mainPlayerId = -1;
         }
     }
 
@@ -76,11 +86,11 @@ public class GameController : MonoBehaviour
         switch (action)
         {
             case "Player":
-                m_playerId = id;
-                CreateCharacter(true, m_playerId, playerData);
+                m_mainPlayerId = id;
+                CreateCharacter(true, m_mainPlayerId, playerData);
                 break;
             case "NewPlayer":
-                if(m_playerId != id)
+                if(m_mainPlayerId != id)
                     CreateCharacter(false, id, playerData);
                 break;
             case "Update":

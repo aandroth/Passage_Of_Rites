@@ -6,7 +6,8 @@ Making it so the backend script can take more than just actions for the GameCont
 
 It can successfully call the AWS to make a server, and connect to that server!
 
-
+Dropped messages:
+Send the timestamp of the last message recieved, and the server responds with the culmination of all changes in its next message
 
 1. Trap Making - Grab three ingredients to make a wacky trap
 			   - Kobold cave workshop

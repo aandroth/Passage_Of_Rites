@@ -3,16 +3,19 @@ using Unity.VisualScripting;
 using UnityEngine;
 using static WorkshopGame;
 
-public class OtherPlayerSupplyItem : Interactable
+public class OtherPlayerSupplyItem : Interactable, IAccessibleSupplyItem
 {
     public bool m_isUsable = true, m_supplyNeededByPlayer = false;
-    public WorkshopGame.SupplyStationName m_supplyStationResourceName = WorkshopGame.SupplyStationName.METAL;
-    public SpriteRenderer m_supplyImageRenderer;
+    public WorkshopGame.SupplyItemName m_supplyStationResourceName = WorkshopGame.SupplyItemName.NOTHING;
+    public SpriteRenderer m_supplyCarriedSpriteRenderer;
     public GameObject m_frameSpriteRenderer;
     public Transform m_centerPoint;
     public float m_minMouseDistanceToCenter = 2f;
     public float m_minPlayerDistanceToCenter = 2f;
-    public PlayerControls m_playerControls;
+
+    public delegate void PlayerControlsDazedCallback();
+    public PlayerControlsDazedCallback m_playerControlsDazedCallback;
+
 
     public WorkshopSupplyStationCircleCollider m_otherPlayerSupplyCircleCollider;
     public bool m_playerInRange = false;
@@ -33,7 +36,7 @@ public class OtherPlayerSupplyItem : Interactable
         return m_centerPoint.transform.position;
     }
 
-    public override SupplyStationName Interact(SupplyStationName supplyHeld = SupplyStationName.NOTHING, List<SupplyStationName> suppliesNeeded = null)
+    public override SupplyItemName Interact(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
     {
         if (m_isUsable && suppliesNeeded.Contains(m_supplyStationResourceName))
         {
@@ -41,7 +44,7 @@ public class OtherPlayerSupplyItem : Interactable
             return supplyName;
         }
         else
-            return SupplyStationName.NOTHING;
+            return SupplyItemName.NOTHING;
     }
 
     public void HighlightSupplyIfNeeded()
@@ -85,21 +88,46 @@ public class OtherPlayerSupplyItem : Interactable
         UnhighlightSupplyIfHighlighted();
     }
 
-    public override bool PlayerCanInteract(SupplyStationName supplyHeld = SupplyStationName.NOTHING, List<SupplyStationName> suppliesNeeded = null)
+    public override bool PlayerCanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
     {
         return (m_isUsable && 
             suppliesNeeded.Contains(m_supplyStationResourceName) && 
-            supplyHeld == SupplyStationName.NOTHING);
+            supplyHeld == SupplyItemName.NOTHING);
     }
 
-    public WorkshopGame.SupplyStationName SupplyStolen()
+    public WorkshopGame.SupplyItemName SupplyStolen()
     {
-        // Inform backend
-        m_supplyImageRenderer.sprite = null;
-        UnhighlightSupplyIfHighlighted();
         var supplyName = m_supplyStationResourceName;
-        m_supplyStationResourceName = SupplyStationName.NOTHING;
-        m_playerControls.Dazed();
+        UnhighlightSupplyIfHighlighted();
+        DeactivateAndRemoveSupplyItem();
+        if(m_playerControlsDazedCallback != null) m_playerControlsDazedCallback();
         return supplyName;
+    }
+
+    public void ActivateAndSetSupplyItem(SupplyItemName supplyName)
+    {
+        m_supplyCarriedSpriteRenderer.gameObject.SetActive(true);
+        m_supplyCarriedSpriteRenderer.sprite = m_nameToSpriteDict[supplyName];
+        m_supplyStationResourceName = supplyName;
+        m_frameSpriteRenderer.SetActive(true);
+    }
+    public void DeactivateAndRemoveSupplyItem()
+    {
+        Debug.Log("DeactivateAndRemoveSupplyItem");
+        m_supplyCarriedSpriteRenderer.sprite = default;
+        m_supplyStationResourceName = SupplyItemName.NOTHING;
+        m_supplyCarriedSpriteRenderer.gameObject.SetActive(false);
+        m_frameSpriteRenderer.SetActive(false);
+    }
+    public WorkshopGame.SupplyItemName GetSupplyItemName()
+    {
+        return m_supplyStationResourceName;
+    }
+    public void SetSupplyItem(WorkshopGame.SupplyItemName supplyItemName)
+    {
+        if (supplyItemName != WorkshopGame.SupplyItemName.NOTHING)
+            ActivateAndSetSupplyItem(supplyItemName);
+        else
+            DeactivateAndRemoveSupplyItem();
     }
 }

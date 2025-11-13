@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class PlayerControls : MonoBehaviour
 {
-    public bool m_isPlayer = false;
+    public bool m_isMainPlayer = false;
     public int m_id;
     public TMPro.TextMeshPro m_nameTextMesh;
     public GameObject m_playerSprite;
@@ -19,14 +19,19 @@ public class PlayerControls : MonoBehaviour
     public string dataCurrent = "Player, ID, position_X, position_Y, localScale_X, animationImage";
     public List<float> m_prevTransformData;
     public int m_prevState;
+    public int m_prevCarriedItem;
     public bool m_isMoving = false;
     public char m_testingMovement = ' ';
     public CircleCollider2D m_circleCollider;
+    [SerializeField]
+    float m_positionDeltaThreshold = 10f;
 
     public enum PLAYER_STATE {IDLE, MOVING, DAZED}
     public PLAYER_STATE m_state = PLAYER_STATE.IDLE;
 
-    public PlayerSupplyItem m_playerSupplyItem;
+    [SerializeField] PlayerSupplyItem m_playerSupplyItem;
+    [SerializeField] OtherPlayerSupplyItem m_otherPlayerSupplyItem;
+    [SerializeField] IAccessibleSupplyItem m_accessibleSupplyItem;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -47,7 +52,7 @@ public class PlayerControls : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (m_isPlayer)
+        if (m_isMainPlayer)
         {
             if (m_state != PLAYER_STATE.DAZED)
             {
@@ -77,6 +82,19 @@ public class PlayerControls : MonoBehaviour
         }
     }
 
+    public void SetPlayerAsMainOrOther(bool isMainPlayer)
+    {
+        if (isMainPlayer)
+        {
+            m_accessibleSupplyItem = m_playerSupplyItem;
+            m_otherPlayerSupplyItem.gameObject.SetActive(false);
+        }
+        else
+        {
+            m_accessibleSupplyItem = m_otherPlayerSupplyItem;
+            m_playerSupplyItem.gameObject.SetActive(false);
+        }
+    }
 
     public void MoveLeftRight(int direction)
     {
@@ -128,8 +146,8 @@ public class PlayerControls : MonoBehaviour
 
     public string GetChangedData()
     {
-        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state"
-        //      0,  1,          2,          3,                           4,     5
+        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, carriedItem";
+        //      0,  1,          2,          3,                           4,     5,           6
         string changedData = $",{m_id},";
         changedData += m_prevTransformData[0] != transform.localPosition.x ? $"{transform.localPosition.x}," : ",";
         changedData += m_prevTransformData[1] != transform.localPosition.y ? $"{transform.localPosition.y}," : ",";
@@ -149,30 +167,34 @@ public class PlayerControls : MonoBehaviour
         m_prevTransformData[1] = transform.localPosition.y;
         m_prevTransformData[2] = m_playerSprite.transform.localScale.x;
         m_prevState = (int)m_state;
+        m_prevCarriedItem = (int)m_accessibleSupplyItem.GetSupplyItemName();
     }
 
-    public string GetAllData()
+    public string GetChangablelData()
     {
-        string allData = $"Update,{m_id},";
-        allData += $"{transform.localPosition.x},";
-        allData += $"{transform.localPosition.y},";
-        allData += $"{m_playerSprite.transform.localScale.x},";
-        allData += $"{(int)m_state}";
+        string changableData = $"Update,{m_id},";
+        changableData += $"{transform.localPosition.x},";
+        changableData += $"{transform.localPosition.y},";
+        changableData += $"{m_playerSprite.transform.localScale.x},";
+        changableData += $"{(int)m_state}";
+        changableData += $"{(int)m_accessibleSupplyItem.GetSupplyItemName()}";
 
-        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state"
-        //      0,  1,          2,          3,                           4,     5
-        return allData;
+        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, carriedItem";
+        //      0,  1,          2,          3,                           4,     5,           6
+        return changableData;
     }
 
     public void PutChangedData(string[] changedDataList)
     {
-        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state"
-        //      0,  1,          2,          3,                           4,     5
+        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, carriedItem";
+        //      0,  1,          2,          3,                           4,     5,           6
 
         Vector3 position = transform.localPosition;
         if (changedDataList[2] != "") position.x = float.Parse(changedDataList[2]);
         if (changedDataList[3] != "") position.y = float.Parse(changedDataList[3]);
-        transform.localPosition = position;
+        float positionDelta = Vector2.Distance(position, transform.localPosition);
+        if (m_isMainPlayer && positionDelta >= m_positionDeltaThreshold)
+            transform.localPosition = position;
 
         Vector3 scale = m_playerSprite.transform.localScale;
         if (changedDataList[4] != "") scale.x = float.Parse(changedDataList[4]);
@@ -192,15 +214,28 @@ public class PlayerControls : MonoBehaviour
                     case PLAYER_STATE.MOVING:
                         m_animator.Play(m_walkCycleName);
                         break;
+                    case PLAYER_STATE.DAZED:
+                        Dazed();
+                        break;
                 }
+            }
+        }
+
+        if (changedDataList[6] != "")
+        {
+            Debug.Log(changedDataList[6]);
+            int carriedItem = int.Parse(changedDataList[6]);
+            if ((int)m_accessibleSupplyItem.GetSupplyItemName() != carriedItem)
+            {
+                m_accessibleSupplyItem.SetSupplyItem((WorkshopGame.SupplyItemName)carriedItem);
             }
         }
     }
 
     public void PutAllData(string[] allDataList)
     {
-        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, name, color";
-        //      0,  1,          2,          3,                           4,     5,    6      7
+        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, carriedItem, name, color";
+        //      0,  1,          2,          3,                           4,     5,           6,    7,     8
 
         Vector3 position = transform.localPosition;
         position.x = float.Parse(allDataList[2]);
@@ -223,11 +258,20 @@ public class PlayerControls : MonoBehaviour
                 case PLAYER_STATE.MOVING:
                     m_animator.Play(m_walkCycleName);
                     break;
+                case PLAYER_STATE.DAZED:
+                    Dazed();
+                    break;
             }
         }
 
-        m_nameTextMesh.text = allDataList[6];
-        string[] color = allDataList[7].Split("|");
+        int carriedItem = int.Parse(allDataList[6]);
+        if ((int)m_accessibleSupplyItem.GetSupplyItemName() != carriedItem)
+        {
+            m_accessibleSupplyItem.SetSupplyItem((WorkshopGame.SupplyItemName)carriedItem);
+        }
+
+        m_nameTextMesh.text = allDataList[7];
+        string[] color = allDataList[8].Split("|");
         m_color = new Color(float.Parse(color[0]),
                             float.Parse(color[1]),
                             float.Parse(color[2]));

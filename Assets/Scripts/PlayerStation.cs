@@ -8,7 +8,7 @@ using static WorkshopGame;
 public class PlayerStation : Interactable
 {
     public bool m_playerInRange = false;
-    public List<SupplyStationName> m_neededSupplyItems;
+    public List<SupplyItemName> m_neededSupplyItems;
     public int m_suppliesGatheredCount = 0;
     public List<SpriteRenderer> m_suppliesNeededIcons;
     public GameObject m_finishedTrapObject;
@@ -44,18 +44,18 @@ public class PlayerStation : Interactable
         m_finishedTrapNameTMP.text = m_trapToNameDict[trapType];
     }
 
-    public override SupplyStationName Interact(SupplyStationName supplyHeld = SupplyStationName.NOTHING, List<SupplyStationName> suppliesNeeded = null)
+    public override SupplyItemName Interact(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
     {
         CheckOffSupply(supplyHeld);
         if (m_suppliesGatheredCount == m_suppliesNeededIcons.Count)
         {
             StartCoroutine(CompleteTrapCoroutine());
         }
-        return SupplyStationName.NOTHING;
+        return SupplyItemName.NOTHING;
     }
-    public override bool PlayerCanInteract(SupplyStationName supplyHeld = SupplyStationName.NOTHING, List<SupplyStationName> suppliesNeeded = null)
+    public override bool PlayerCanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
     {
-        return supplyHeld != SupplyStationName.NOTHING && m_neededSupplyItems.Contains(supplyHeld);
+        return supplyHeld != SupplyItemName.NOTHING && m_neededSupplyItems.Contains(supplyHeld);
     }
 
     public override Vector3 GetCenterPoint()
@@ -63,12 +63,12 @@ public class PlayerStation : Interactable
         return gameObject.transform.position;
     }
 
-    public void CheckOffSupply(SupplyStationName supplyFromPlayer)
+    public void CheckOffSupply(SupplyItemName supplyFromPlayer)
     {
         ++m_suppliesGatheredCount;
         int index = m_neededSupplyItems.IndexOf(supplyFromPlayer);
         m_suppliesNeededIcons[index].sprite = m_checkmarkSprite;
-        m_neededSupplyItems[index] = SupplyStationName.NOTHING;
+        m_neededSupplyItems[index] = SupplyItemName.NOTHING;
     }
 
     public IEnumerator CompleteTrapCoroutine()
