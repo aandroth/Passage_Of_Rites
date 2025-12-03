@@ -16,7 +16,7 @@ public class GameController : MonoBehaviour
 
     public void OnAwake()
     {
-        m_blackoutPanel.StartFadeOut();
+        m_blackoutPanel?.StartFadeOut();
     }
 
     public void Start()
@@ -24,11 +24,6 @@ public class GameController : MonoBehaviour
         m_backend.GetPlayerData = GetPlayerChangedData;
         m_backend.SetPlayerChangedDataToCurrentValues = SetPlayerChangedDataToCurrentValues;
         m_backend.ReceivedMessageForGameController = ReceivedMessage;
-    }
-
-    public void Update()
-    {
-        
     }
 
     public void UpdateCharacter(int id, string[] playerData)
@@ -85,8 +80,10 @@ public class GameController : MonoBehaviour
 
         switch (action)
         {
-            case "Player":
+            case "Init":
                 m_mainPlayerId = id;
+                break;
+            case "Player":
                 CreateCharacter(true, m_mainPlayerId, playerData);
                 break;
             case "NewPlayer":

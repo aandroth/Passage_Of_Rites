@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static Unity.Collections.AllocatorManager;
 
 public class TitleSceneController : MonoBehaviour
 {
@@ -78,7 +79,7 @@ public class TitleSceneController : MonoBehaviour
         for(int i = 0; i < servers.Length; ++i)
         {
             GameObject newButton = Instantiate(m_buttonPrefab, m_buttonParent.transform);
-            newButton.GetComponent<IpButton>().AssignButtonParameters(servers[i], m_ipAddressText, m_backend.SetServerUrl);
+            newButton.GetComponent<IpButton>().AssignButtonParameters(servers[i], m_ipAddressText, m_backend.SetServerUrl, m_backend.StartWebSocketConnection);
         }
     }
 

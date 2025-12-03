@@ -2,6 +2,7 @@ using NUnit.Framework;
 using UnityEngine;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using System.Collections;
 
 public class WorkshopGame : Game
 {
@@ -15,10 +16,18 @@ public class WorkshopGame : Game
     public int m_playerStationIdx = 0;
     public PlayerSupplyItem m_playerSupplyItem = null;
     public int m_playerScore = 0;
+    [SerializeField] private float m_gameInitDelay = 0;
+    [SerializeField] private MinigameTitleCard m_gameTitleCard;
+    [SerializeField] private BlackoutPanel m_blackoutCard;
+    [SerializeField] private int m_timeForGame;
+    [SerializeField] private TimeDisplayed m_timeDisplayed;
+    [SerializeField] private ThreeTwoOneGo_Countdown m_threeTwoOneGoCountdown;
 
     public PlayerStation m_playerStation;
     public List<Transform> m_playerSpawnLocations;
     public static List<Transform> m_playerTableLocations;
+    private enum GAME_STATE {INIT, PLAYING, GAME_OVER};
+    private GAME_STATE m_gameState = GAME_STATE.INIT;
 
     public static Dictionary<TrapType, SupplyItemName[]> m_trapToSuppliesDict = new Dictionary<TrapType, SupplyItemName[]>();
     public static Dictionary<TrapType, string> m_trapToNameDict = new Dictionary<TrapType, string>();
@@ -67,6 +76,76 @@ public class WorkshopGame : Game
 
         m_playerStation.m_reportTrapCompleted = TrapCompleted;
         AssignTrapToPlayerAndStation();
+        StartCoroutine(GameIntro());
+    }
+
+    private IEnumerator GameIntro()
+    {
+        float initDelayTime = m_gameInitDelay;
+
+        while (initDelayTime > 0)
+        {
+            initDelayTime -= Time.deltaTime;
+            yield return null;
+        }
+        m_gameTitleCard.OutroAnimation();
+
+        float timeCardDelayTime = m_gameInitDelay*2f;
+
+        while (timeCardDelayTime > 0)
+        {
+            timeCardDelayTime -= Time.deltaTime;
+            yield return null;
+        }
+        m_blackoutCard.StartFadeOut();
+
+        float countdownDelayTime = m_gameInitDelay * 2f;
+
+        while (timeCardDelayTime > 0)
+        {
+            timeCardDelayTime -= Time.deltaTime;
+            yield return null;
+        }
+
+        float threeTwoOneGoDelayTime = 10f + 1f;
+        m_threeTwoOneGoCountdown?.StartCountdown(10f);
+        while (threeTwoOneGoDelayTime > 0)
+        {
+            threeTwoOneGoDelayTime -= Time.deltaTime;
+            yield return null;
+        }
+
+        StartCoroutine(Countdown());
+    }
+
+    private IEnumerator Countdown()
+    {
+        float timeForGame = (float)m_timeForGame;
+        int prevTime = Mathf.FloorToInt(m_timeForGame);
+        while (timeForGame > 0)
+        {
+            timeForGame -= Time.deltaTime;
+            m_timeDisplayed.SetTime(Mathf.FloorToInt(timeForGame));
+            yield return null;
+        }
+        timeForGame = 0;
+    }
+
+    private IEnumerator ThreeTwoOneGo_Countdown(float totalTime)
+    {
+        float timePerNumber = totalTime * 0.25f;
+        float timeCount = timePerNumber;
+        int currCount = 3;
+        while(currCount > 0)
+        {
+            while (timeCount > 0)
+            {
+                timeCount -= Time.deltaTime;
+                yield return null;
+            }
+            currCount--;
+
+        }
     }
 
     public static Vector3 GetSpawnLocationForId(int id)

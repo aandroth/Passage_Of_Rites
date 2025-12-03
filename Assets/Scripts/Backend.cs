@@ -28,6 +28,7 @@ public class Backend : MonoBehaviour
     public int m_webSocketConnectionAttemptsToTry = 3;
     public float intervalTimeCurr = 0f;
     public float intervalTime = 0.3f;
+    public bool m_gameInProgress = false;
     public bool m_connected = false;
     public string urlResult;
     //public string m_defaultUrl = "localhost:3000/hello";
@@ -55,6 +56,8 @@ public class Backend : MonoBehaviour
     }
     public async void StartWebSocketConnection()
     {
+        if(m_connected) await m_webSocket.Close();
+
         m_webSocket = new WebSocket($"ws://{m_serverUrl}:5000");
 
         m_webSocket.OnOpen += () =>
@@ -90,7 +93,10 @@ public class Backend : MonoBehaviour
         // waiting for messages
         await m_webSocket.Connect();
     }
-
+    public void StartGettingChangedData()
+    {
+        m_gameInProgress = true;
+    }
 
     public void RequestNewServer(Action<string> callbackFn)
     {
@@ -135,27 +141,37 @@ public class Backend : MonoBehaviour
 
     public IEnumerator RequestListOfServersCoroutine(Action<string[]> callbackFn)
     {
-        Debug.Log($"Requesting all existing servers at {m_apiGatewayUrl}/ListGames");
-        using (UnityWebRequest serverRequest = UnityWebRequest.Get(m_apiGatewayUrl + "/ListGames"))
+
+        if (m_serverUrl == "localhost")
         {
-            Debug.Log($"Request made");
-            yield return serverRequest.SendWebRequest();
-            string errorString = "There was an error? Of course there was an error. Why couldn't it just work!?\n- you, probably";
-            string serverResultString = "";
-            switch (serverRequest.result)
+            Debug.Log($"Requesting all existing servers at localhost");
+            callbackFn(new string[] { "localhost" });
+            Debug.Log($"RequestListOfServers SUCCESS: localhost");
+        }
+        else
+        {
+            Debug.Log($"Requesting all existing servers at {m_apiGatewayUrl}/ListGames");
+            using (UnityWebRequest serverRequest = UnityWebRequest.Get(m_apiGatewayUrl + "/ListGames"))
             {
-                case UnityWebRequest.Result.ConnectionError:
-                case UnityWebRequest.Result.DataProcessingError:
-                case UnityWebRequest.Result.ProtocolError:
-                    Debug.Log(errorString);
-                    Debug.Log(serverRequest.result);
-                    serverResultString = "Bad Result";
-                    break;
-                case UnityWebRequest.Result.Success:
-                    var data = JsonUtility.FromJson<JsonClassList>(serverRequest.downloadHandler.text);
-                    Debug.Log($"RequestListOfServers SUCCESS: {(m_serverUrl)}, {data.body.Length}");
-                    callbackFn(data.body);
-                    break;
+                Debug.Log($"Request made");
+                yield return serverRequest.SendWebRequest();
+                string errorString = "There was an error? Of course there was an error. Why couldn't it just work!?\n- you, probably";
+                string serverResultString = "";
+                switch (serverRequest.result)
+                {
+                    case UnityWebRequest.Result.ConnectionError: 
+                    case UnityWebRequest.Result.DataProcessingError:
+                    case UnityWebRequest.Result.ProtocolError:
+                        Debug.Log(errorString);
+                        Debug.Log(serverRequest.result);
+                        serverResultString = "Bad Result";
+                        break;
+                    case UnityWebRequest.Result.Success:
+                        var data = JsonUtility.FromJson<JsonClassList>(serverRequest.downloadHandler.text);
+                        Debug.Log($"RequestListOfServers SUCCESS: {(m_serverUrl)}, {data.body.Length}");
+                        callbackFn(data.body);
+                        break;
+                }
             }
         }
         Debug.Log($"Request finished");
@@ -215,7 +231,7 @@ public class Backend : MonoBehaviour
             CancelConnection();
         }
 
-        if (m_connected && GetPlayerData != null)
+        if (m_connected && GetPlayerData != null && m_gameInProgress)
         {
             intervalTimeCurr += Time.deltaTime;
             if (intervalTimeCurr >= intervalTime)
@@ -296,6 +312,7 @@ public class Backend : MonoBehaviour
             case "Disconnect":
                 CancelConnection();
                 break;
+            case "Init":
             case "Player":
             case "NewPlayer":
             case "Update":
