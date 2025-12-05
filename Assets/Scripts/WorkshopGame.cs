@@ -124,10 +124,15 @@ public class WorkshopGame : Game
         while (timeForGame > 0)
         {
             timeForGame -= Time.deltaTime;
-            m_timeDisplayed.SetTime(Mathf.FloorToInt(timeForGame));
+            if(prevTime != Mathf.FloorToInt(timeForGame))
+            {
+                prevTime = Mathf.FloorToInt(timeForGame);
+                m_timeDisplayed.SetTime(prevTime);
+            }
             yield return null;
         }
         timeForGame = 0;
+        m_timeDisplayed.SetTime(0);
     }
 
     private IEnumerator ThreeTwoOneGo_Countdown(float totalTime)
