@@ -1,22 +1,26 @@
-using NUnit.Framework;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
 public class GameController : MonoBehaviour
 {
-    [SerializeField]
-    BlackoutPanel m_blackoutPanel;
     public float m_pullChangedDataInterval;
     public Dictionary<int, PlayerControls> m_playersDict = new Dictionary<int, PlayerControls>();
     public GameObject m_playerPrefab;
     public int m_mainPlayerId = -1;
+    public bool m_isGameOwner;
 
     public Backend m_backend;
 
-    public void OnAwake()
+    public static GameController Instance { get; private set; }
+
+    private void Awake()
     {
-        m_blackoutPanel?.StartFadeOut();
+        // If there is an instance, and it's not me, delete myself.
+        if (Instance != null && Instance != this)
+            Destroy(this);
+        else
+            Instance = this;
     }
 
     public void Start()
@@ -54,6 +58,20 @@ public class GameController : MonoBehaviour
         return go;
     }
 
+    public void BecomeGameOwner(bool becameOwner = true)
+    {
+        Debug.Log($"Ownership is now marked as {becameOwner}");
+
+        m_isGameOwner = becameOwner;
+
+        TitleSceneController t = (TitleSceneController)GameObject.FindAnyObjectByType(typeof(TitleSceneController));
+        if (t != null)
+        {
+            Debug.Log($"Found TitleSceneController");
+            t.BecomeGameOwner(becameOwner);
+        }
+    }
+
     public string GetPlayerChangedData()
     {
         return m_mainPlayerId == -1 ? "" : m_playersDict[m_mainPlayerId].GetChangedData();
@@ -82,6 +100,14 @@ public class GameController : MonoBehaviour
         {
             case "Init":
                 m_mainPlayerId = id;
+                break;
+            case "Make_Owner":
+                if(playerData.Length >= 3)
+                    BecomeGameOwner(playerData[2] == "t" ? true : false);
+                break;
+            case "Start_Game":
+                if(playerData.Length >= 3)
+                    BecomeGameOwner(playerData[2] == "t" ? true : false);
                 break;
             case "Player":
                 CreateCharacter(true, m_mainPlayerId, playerData);

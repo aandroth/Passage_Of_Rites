@@ -1,10 +1,13 @@
+#if UNITY_EDITOR
 using NUnit.Framework;
+#endif
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class WorkshopGame_Testing : MonoBehaviour
 {
+#if UNITY_EDITOR
     public GameObject m_stationPrefab = null;
     public GameObject m_playerSupplyItemPrefab = null;
     public WorkshopGame m_workshopGame = null;
@@ -111,4 +114,5 @@ public class WorkshopGame_Testing : MonoBehaviour
     //    Assert.AreEqual(WorkshopGame.SupplyStationName.ROPE, m_playerSupplyItem.m_supplyName);
     //    Debug.Log("PlayerSupplyItem tests Passed");
     //}
+#endif
 }

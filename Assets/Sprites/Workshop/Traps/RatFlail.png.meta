@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      RatFlail_0: -1481468338240374646
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

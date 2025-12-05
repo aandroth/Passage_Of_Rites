@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      BurningOil_0: -7380629452284729697
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

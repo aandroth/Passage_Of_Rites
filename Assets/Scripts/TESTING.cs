@@ -1,11 +1,14 @@
+
+#if UNITY_EDITOR
 using NUnit.Framework;
-using NUnit.Framework.Internal;
+#endif
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 
 public class TESTING : MonoBehaviour
 {
+#if UNITY_EDITOR
     public GameController m_gameController;
     public Backend m_backend;
     public string m_createCharTest = "Player,1,5,5,1,0,Player_1,0|0|255";
@@ -116,4 +119,5 @@ public class TESTING : MonoBehaviour
         yield return new WaitForSeconds(1);
         Assert.AreNotEqual(goPlayer.GetType(), typeof(PlayerControls));
     }
+#endif
 }

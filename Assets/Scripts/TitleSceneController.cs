@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -7,16 +6,14 @@ using static Unity.Collections.AllocatorManager;
 
 public class TitleSceneController : MonoBehaviour
 {
-    [SerializeField]
-    TMP_Text m_ipAddressText;
-    [SerializeField]
-    Backend m_backend = null;
+    [SerializeField] TMP_Text m_ipAddressText;
+    [SerializeField] Backend m_backend = null;
     public GameObject m_buttonPrefab;
     public GameObject m_buttonParent;
     public float      m_buttonOffset;
     //public Transform  m_buttonStartPos;
-    [SerializeField]
-    List<GameObject> m_ipButtonsList = new List<GameObject>();
+    [SerializeField] List<GameObject> m_ipButtonsList = new List<GameObject>();
+    [SerializeField] Button m_startGame = null;
 
     public void CallBackendForNewServer()
     {
@@ -79,7 +76,7 @@ public class TitleSceneController : MonoBehaviour
         for(int i = 0; i < servers.Length; ++i)
         {
             GameObject newButton = Instantiate(m_buttonPrefab, m_buttonParent.transform);
-            newButton.GetComponent<IpButton>().AssignButtonParameters(servers[i], m_ipAddressText, m_backend.SetServerUrl, m_backend.StartWebSocketConnection);
+            newButton.GetComponent<IpButton>().AssignButtonParameters(servers[i], m_ipAddressText, m_backend.SetServerUrl);
         }
     }
 
@@ -87,6 +84,11 @@ public class TitleSceneController : MonoBehaviour
     {
         foreach (var item in m_ipButtonsList)
             Destroy(item);
+    }
+
+    public void BecomeGameOwner(bool becameOwner = true)
+    {
+        m_startGame?.gameObject.SetActive(becameOwner);
     }
 
 

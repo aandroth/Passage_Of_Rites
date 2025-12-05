@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using System.Xml.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -9,6 +8,8 @@ using UnityEngine.Networking;
 using System.Collections;
 using System;
 using static UnityEngine.UIElements.UxmlAttributeDescription;
+using static System.Collections.Specialized.BitVector32;
+using UnityEditor.VersionControl;
 
 public class Backend : MonoBehaviour
 {
@@ -54,6 +55,9 @@ public class Backend : MonoBehaviour
         public string statusCode;
         public string body;
     }
+
+
+
     public async void StartWebSocketConnection()
     {
         if(m_connected) await m_webSocket.Close();
@@ -76,6 +80,7 @@ public class Backend : MonoBehaviour
         {
             Debug.Log("Connection closed! " + e);
             m_connected = false;
+            CancelConnection();
         };
 
         m_webSocket.OnMessage += (bytes) =>
@@ -174,6 +179,16 @@ public class Backend : MonoBehaviour
                 }
             }
         }
+        Debug.Log($"Request finished");
+    }
+    public void RequestServerToStartGame(int id)
+    {
+        //"Action, id
+        //      0,  1
+        string startGameRequest = $"Start_Game,{id}";
+
+        var bytes = System.Text.Encoding.UTF8.GetBytes(startGameRequest);
+        m_webSocket.Send(bytes);
         Debug.Log($"Request finished");
     }
 
@@ -287,6 +302,7 @@ public class Backend : MonoBehaviour
             m_webSocket.CancelConnection();
         }
         m_connected = false;
+        SendServerDataToGameController("", "Make_Owner", new string[] {"", "-1", "f"}); // Stop being a Game Owner
     }
 
     public void SendServerDataToGameController(string data, string action, string[] playerData)
@@ -313,6 +329,8 @@ public class Backend : MonoBehaviour
                 CancelConnection();
                 break;
             case "Init":
+            case "Make_Owner":
+            case "Start_Game":
             case "Player":
             case "NewPlayer":
             case "Update":

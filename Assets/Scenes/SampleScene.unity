@@ -700,9 +700,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44adc25abafb7af478014d5cd62b4329, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_blackoutPanel: {fileID: 0}
   m_pullChangedDataInterval: 0.3
   m_playerPrefab: {fileID: 853139005483577130, guid: dabb22ec8374b5343b42cfaf80f428ba, type: 3}
-  m_playerId: -1
+  m_mainPlayerId: -1
+  m_isGameOwner: 0
   m_backend: {fileID: 1697930265}
 --- !u!4 &819118123
 Transform:
@@ -829,53 +831,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 513145209}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1177553590
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1177553592}
-  - component: {fileID: 1177553591}
-  m_Layer: 0
-  m_Name: TESTING
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1177553591
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1177553590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9cf9ad7f3cf00fd4bbc638e87b1e1aea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_gameController: {fileID: 819118122}
-  m_backend: {fileID: 1697930265}
-  m_createCharTest: Player,1,5,5,1,0,Player_1,0|0|255
---- !u!4 &1177553592
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1177553590}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.2400346, y: -2.2774937, z: -0.06621045}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1697930264
 GameObject:
   m_ObjectHideFlags: 0
@@ -907,9 +862,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_apiGatewayUrl: https://t2lfwpskr0.execute-api.us-west-2.amazonaws.com/dev
   m_serverUrl: 35.86.97.92
+  m_serverUrlList: []
   m_webSocketConnectionAttemptsToTry: 3
   intervalTimeCurr: 0
   intervalTime: 0.3
+  m_gameInProgress: 0
   m_connected: 0
   urlResult: 
 --- !u!4 &1697930266
@@ -1073,7 +1030,6 @@ SceneRoots:
   - {fileID: 869381423}
   - {fileID: 1697930266}
   - {fileID: 819118123}
-  - {fileID: 1177553592}
   - {fileID: 1930528755}
   - {fileID: 513145209}
   - {fileID: 744689718}
