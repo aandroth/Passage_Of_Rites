@@ -2325,7 +2325,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44adc25abafb7af478014d5cd62b4329, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_blackoutPanel: {fileID: 0}
   m_pullChangedDataInterval: 0.3
   m_playerPrefab: {fileID: 853139005483577130, guid: dabb22ec8374b5343b42cfaf80f428ba, type: 3}
   m_mainPlayerId: -1
@@ -2992,14 +2991,14 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1376700245}
-        m_TargetAssemblyTypeName: TitleSceneController, Assembly-CSharp
-        m_MethodName: CallBackendForServerDisconnect
-        m_Mode: 1
+      - m_Target: {fileID: 1902285032}
+        m_TargetAssemblyTypeName: Backend, Assembly-CSharp
+        m_MethodName: RequestServerToLoadLevel
+        m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
+          m_IntArgument: 2
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0

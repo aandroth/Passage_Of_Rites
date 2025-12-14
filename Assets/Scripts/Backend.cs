@@ -42,7 +42,10 @@ public class Backend : MonoBehaviour
         if (Instance != null && Instance != this)
             Destroy(this);
         else
+        {
             Instance = this;
+            DontDestroyOnLoad(this);
+        }
     }
 
     public class JsonClassList
@@ -86,7 +89,6 @@ public class Backend : MonoBehaviour
         m_webSocket.OnMessage += (bytes) =>
         {
             Debug.Log("OnMessage!");
-            Debug.Log(bytes);
 
             // getting the message as a string
             var message = System.Text.Encoding.UTF8.GetString(bytes);
@@ -181,21 +183,53 @@ public class Backend : MonoBehaviour
         }
         Debug.Log($"Request finished");
     }
-    public void RequestServerToStartGame(int id)
+    public void RequestServerToLoadLevel(int levelIdx)
     {
-        //"Action, id
-        //      0,  1
-        string startGameRequest = $"Start_Game,{id}";
+        if (this == Instance)
+        {
+            //"Action, levelName
+            //      0,         1
+            string loadLevelRequest = $"Load_Level,{levelIdx}";
 
-        var bytes = System.Text.Encoding.UTF8.GetBytes(startGameRequest);
-        m_webSocket.Send(bytes);
-        Debug.Log($"Request finished");
+            var bytes = System.Text.Encoding.UTF8.GetBytes(loadLevelRequest);
+            m_webSocket.Send(bytes);
+            Debug.Log($"Request finished");
+        }
+    }
+    public void SignalReadinessToServer(int id)
+    {
+        if (this == Instance)
+        {
+            //"Action, id
+            //      0,  1
+            string readyToServer = $"Player_Ready,";
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(readyToServer);
+            m_webSocket.Send(bytes);
+            Debug.Log($"Request finished");
+        }
+    }
+    public void RequestServerToStartGame()
+    {
+        if (this == Instance)
+        {
+            //"Action, id
+            //      0,  1
+            string startGameRequest = $"Start_Game,";
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(startGameRequest);
+            m_webSocket.Send(bytes);
+            Debug.Log($"Request finished");
+        }
     }
 
 
     public void RequestKillServer()
     {
-        StartCoroutine(RequestKillServerCoroutine());
+        if (this == Instance)
+        {
+            StartCoroutine(RequestKillServerCoroutine());
+        }
     }
 
     public IEnumerator RequestKillServerCoroutine()
@@ -297,23 +331,26 @@ public class Backend : MonoBehaviour
 
     public void CancelConnection()
     {
-        if (m_webSocket != null && m_connected)
+        if (this == Instance)
         {
-            m_webSocket.CancelConnection();
+            if (this.m_webSocket != null && this.m_connected)
+            {
+                m_webSocket.CancelConnection();
+            }
+            m_connected = false;
+            SendServerDataToGameController("", "Make_Owner", new string[] { "", "-1", "f" }); // Stop being a Game Owner
         }
-        m_connected = false;
-        SendServerDataToGameController("", "Make_Owner", new string[] {"", "-1", "f"}); // Stop being a Game Owner
     }
 
     public void SendServerDataToGameController(string data, string action, string[] playerData)
     {
-        if (ReceivedMessageForGameController == null)
+        if (Instance.ReceivedMessageForGameController == null)
         {
             Debug.LogError($"ReceivedMessageForGameController is null");
             return;
         }
 
-        ReceivedMessageForGameController(data, action, playerData);
+        Instance.ReceivedMessageForGameController(data, action, playerData);
     }
 
     public void ReceivedMessage(string raw_data)
@@ -330,7 +367,8 @@ public class Backend : MonoBehaviour
                 break;
             case "Init":
             case "Make_Owner":
-            case "Start_Game":
+            case "Load_Level":
+            case "Game_Start":
             case "Player":
             case "NewPlayer":
             case "Update":

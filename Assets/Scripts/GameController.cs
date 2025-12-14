@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class GameController : MonoBehaviour
     public bool m_isGameOwner;
 
     public Backend m_backend;
+    public Game m_game = null;
 
     public static GameController Instance { get; private set; }
 
@@ -20,14 +22,13 @@ public class GameController : MonoBehaviour
         if (Instance != null && Instance != this)
             Destroy(this);
         else
+        {
             Instance = this;
-    }
-
-    public void Start()
-    {
-        m_backend.GetPlayerData = GetPlayerChangedData;
-        m_backend.SetPlayerChangedDataToCurrentValues = SetPlayerChangedDataToCurrentValues;
-        m_backend.ReceivedMessageForGameController = ReceivedMessage;
+            DontDestroyOnLoad(this);
+            m_backend.GetPlayerData = GetPlayerChangedData;
+            m_backend.SetPlayerChangedDataToCurrentValues = SetPlayerChangedDataToCurrentValues;
+            m_backend.ReceivedMessageForGameController = ReceivedMessage;
+        }
     }
 
     public void UpdateCharacter(int id, string[] playerData)
@@ -43,7 +44,7 @@ public class GameController : MonoBehaviour
         m_playersDict[m_mainPlayerId].transform.position = position;
     }
 
-    public GameObject CreateCharacter(bool isMainPlayer, int id, string[] data)
+    public PlayerControls CreateCharacter(bool isMainPlayer, int id, string[] data)
     {
         Vector3 spawnPosition = WorkshopGame.GetSpawnLocationForId(id);
 
@@ -55,7 +56,7 @@ public class GameController : MonoBehaviour
         m_playersDict[id] = go.GetComponent<PlayerControls>();
         m_mainPlayerId = isMainPlayer ? id : m_mainPlayerId;
         Debug.Log($"{go.GetComponent<PlayerControls>().m_nameTextMesh.text} created");
-        return go;
+        return go.GetComponent<PlayerControls>();
     }
 
     public void BecomeGameOwner(bool becameOwner = true)
@@ -81,6 +82,13 @@ public class GameController : MonoBehaviour
         if(m_mainPlayerId != -1) m_playersDict[m_mainPlayerId].SetChangedDataToCurrentValues();
     }
 
+    private void OnLevelWasLoaded(int level)
+    {
+        m_game = GameObject.FindAnyObjectByType<Game>();
+        if (m_game != null)
+            m_backend.SignalReadinessToServer(m_mainPlayerId);
+    }
+
     public void DestroyPlayer()
     {
         if(m_mainPlayerId != -1)
@@ -93,8 +101,9 @@ public class GameController : MonoBehaviour
 
     public void ReceivedMessage(string data, string action, string[] playerData)
     {
-        int id = int.Parse(playerData[1]);
-        Debug.Log($"Received: {data} with action {action} and id {id}");
+        int id = playerData.Length >= 2 ? int.Parse(playerData[1]) : -1;
+        Debug.Log($"Received: {data} with action {action} and id {id}, playerData length: {playerData.Length}");
+
 
         switch (action)
         {
@@ -105,16 +114,23 @@ public class GameController : MonoBehaviour
                 if(playerData.Length >= 3)
                     BecomeGameOwner(playerData[2] == "t" ? true : false);
                 break;
-            case "Start_Game":
-                if(playerData.Length >= 3)
-                    BecomeGameOwner(playerData[2] == "t" ? true : false);
+            case "Load_Level":
+                if (playerData.Length >= 2) 
+                    SceneManager.LoadScene(int.Parse(playerData[1]));
                 break;
-            case "Player":
-                CreateCharacter(true, m_mainPlayerId, playerData);
+            case "Game_Start":
+                if (playerData.Length >= 2)
+                {
+                    Debug.Log("Calling GameIntro");
+                    m_game.StartGameIntro();
+                    Debug.Log("Called GameIntro");
+                }
                 break;
             case "NewPlayer":
-                if(m_mainPlayerId != id)
-                    CreateCharacter(false, id, playerData);
+                PlayerControls pc = CreateCharacter(m_mainPlayerId == id, id, playerData);
+                m_game.AssignPlayer(pc, id, m_mainPlayerId == id);
+                if (m_mainPlayerId == id)
+                    m_backend.SignalReadinessToServer(id);
                 break;
             case "Update":
                 UpdateCharacter(id, playerData);

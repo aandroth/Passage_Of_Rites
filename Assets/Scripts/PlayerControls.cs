@@ -20,13 +20,15 @@ public class PlayerControls : MonoBehaviour
     public int m_prevState;
     public int m_prevCarriedItem;
     public bool m_isMoving = false;
-    public char m_testingMovement = ' ';
+    public char m_nonPlayerMovement = ' ';
     public CircleCollider2D m_circleCollider;
     [SerializeField]
     float m_positionDeltaThreshold = 10f;
 
     public enum PLAYER_STATE {IDLE, MOVING, DAZED}
     public PLAYER_STATE m_state = PLAYER_STATE.IDLE;
+    public bool m_playerIsControllable = false;
+
 
     [SerializeField] PlayerSupplyItem m_playerSupplyItem;
     [SerializeField] OtherPlayerSupplyItem m_otherPlayerSupplyItem;
@@ -56,19 +58,19 @@ public class PlayerControls : MonoBehaviour
             if (m_state != PLAYER_STATE.DAZED)
             {
                 m_isMoving = false;
-                if (Input.GetKey(KeyCode.A) || m_testingMovement == 'A')
+                if ((Input.GetKey(KeyCode.A) && m_playerIsControllable) || m_nonPlayerMovement == 'A')
                 {
                     MoveLeftRight(-1);
                 }
-                else if (Input.GetKey(KeyCode.D) || m_testingMovement == 'D')
+                else if ((Input.GetKey(KeyCode.D) && m_playerIsControllable) || m_nonPlayerMovement == 'D')
                 {
                     MoveLeftRight(1);
                 }
-                if (Input.GetKey(KeyCode.W) || m_testingMovement == 'W')
+                if ((Input.GetKey(KeyCode.W) && m_playerIsControllable) || m_nonPlayerMovement == 'W')
                 {
                     MoveUpDown(1);
                 }
-                else if (Input.GetKey(KeyCode.S) || m_testingMovement == 'S')
+                else if ((Input.GetKey(KeyCode.S) && m_playerIsControllable) || m_nonPlayerMovement == 'S')
                 {
                     MoveUpDown(-1);
                 }
@@ -79,6 +81,23 @@ public class PlayerControls : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void SetPlayerAsControllable()
+    {
+        m_playerIsControllable = true;
+        Debug.Log("Player is now controllable");
+    }
+
+    public void SetPlayerAsNotControllable()
+    {
+        m_playerIsControllable = false;
+    }
+
+    public void SetPlayerAtSpawnPoint(Transform spawnPoint)
+    {
+        transform.position = spawnPoint.transform.position;
+        m_playerSprite.transform.localScale = spawnPoint.transform.localScale;
     }
 
     public void SetPlayerAsMainOrOther(bool isMainPlayer)
@@ -297,6 +316,11 @@ public class PlayerControls : MonoBehaviour
         m_animatorStatusEffect.StopPlayback();
         m_animatorStatusEffect.gameObject.SetActive(false);
         m_animator.speed = 1;
+    }
+
+    public void AssignTrapToPlayerSupplyItem(WorkshopGame.TrapType t)
+    {
+        m_playerSupplyItem.AssignTrapToComplete(t);
     }
 
     public void Victory()

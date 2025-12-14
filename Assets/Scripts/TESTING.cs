@@ -30,14 +30,14 @@ public class TESTING : MonoBehaviour
     public IEnumerator TestingSequence()
     {
         // GameController
-        GameObject goPlayer = m_gameController.CreateCharacter(true, 0, m_createCharTest.Split(','));
+        GameObject goPlayer = m_gameController.CreateCharacter(true, 0, m_createCharTest.Split(',')).gameObject;
         Assert.IsNotNull(goPlayer);
         Assert.IsNotNull(m_gameController.m_playersDict[goPlayer.GetComponent<PlayerControls>().m_id]);
 
         // Check AllData
         Assert.AreEqual(goPlayer.GetComponent<PlayerControls>().GetChangablelData(), "Update,0,5,5,1,0");
 
-        GameObject goOther = m_gameController.CreateCharacter(false, 1, m_createCharTest.Split(','));
+        GameObject goOther = m_gameController.CreateCharacter(false, 1, m_createCharTest.Split(',')).gameObject;
         Assert.IsNotNull(goOther);
         Assert.IsNotNull(m_gameController.m_playersDict[goOther.GetComponent<PlayerControls>().m_id]);
 
@@ -49,13 +49,13 @@ public class TESTING : MonoBehaviour
         float xPositionPlayer = goPlayer.transform.position.x;
         float xPositionOther = goOther.transform.position.x;
         float keepLoopingTime = 1f;
-        goPlayer.GetComponent<PlayerControls>().m_testingMovement = 'D';
+        goPlayer.GetComponent<PlayerControls>().m_nonPlayerMovement = 'D';
         while (keepLoopingTime > 0)
         {
             keepLoopingTime -= Time.deltaTime;
             yield return null;
         }
-        goPlayer.GetComponent<PlayerControls>().m_testingMovement = ' ';
+        goPlayer.GetComponent<PlayerControls>().m_nonPlayerMovement = ' ';
         Assert.AreNotEqual(m_gameController.GetPlayerChangedData(), "Unchanged");
         Assert.AreEqual(goOther.transform.position.x, xPositionOther);
         Assert.IsTrue(goPlayer.transform.position.x > xPositionPlayer);
@@ -67,14 +67,14 @@ public class TESTING : MonoBehaviour
         // Move left
         xPositionPlayer = goPlayer.transform.position.x; 
         keepLoopingTime = 1f;
-        goPlayer.GetComponent<PlayerControls>().m_testingMovement = 'A';
+        goPlayer.GetComponent<PlayerControls>().m_nonPlayerMovement = 'A';
         while (keepLoopingTime > 0)
         {
             keepLoopingTime -= Time.deltaTime;
             yield return null;
         }
         Assert.IsTrue(goPlayer.GetComponent<PlayerControls>().m_isMoving);
-        goPlayer.GetComponent<PlayerControls>().m_testingMovement = ' ';
+        goPlayer.GetComponent<PlayerControls>().m_nonPlayerMovement = ' ';
         Assert.AreNotEqual(m_gameController.GetPlayerChangedData(), "Unchanged");
 
         Assert.AreEqual(goOther.transform.position.x, xPositionOther);
@@ -88,26 +88,26 @@ public class TESTING : MonoBehaviour
         float yPositionPlayer = goPlayer.transform.position.y; 
         float yPositionOther = goOther.transform.position.y; 
         keepLoopingTime = 1f;
-        goPlayer.GetComponent<PlayerControls>().m_testingMovement = 'W';
+        goPlayer.GetComponent<PlayerControls>().m_nonPlayerMovement = 'W';
         while (keepLoopingTime > 0)
         {
             keepLoopingTime -= Time.deltaTime;
             yield return null;
         }
-        goPlayer.GetComponent<PlayerControls>().m_testingMovement = ' ';
+        goPlayer.GetComponent<PlayerControls>().m_nonPlayerMovement = ' ';
         Assert.AreNotEqual(m_gameController.GetPlayerChangedData(), "Unchanged");
         Assert.IsTrue(goPlayer.transform.position.y > yPositionPlayer);
 
         // Move down
         yPositionPlayer = goPlayer.transform.position.y;
         keepLoopingTime = 1f;
-        goPlayer.GetComponent<PlayerControls>().m_testingMovement = 'S';
+        goPlayer.GetComponent<PlayerControls>().m_nonPlayerMovement = 'S';
         while (keepLoopingTime > 0)
         {
             keepLoopingTime -= Time.deltaTime;
             yield return null;
         }
-        goPlayer.GetComponent<PlayerControls>().m_testingMovement = ' ';
+        goPlayer.GetComponent<PlayerControls>().m_nonPlayerMovement = ' ';
         Assert.AreNotEqual(m_gameController.GetPlayerChangedData(), "Unchanged");
         Assert.IsTrue(goPlayer.transform.position.y < yPositionPlayer);
         yield return new WaitForSeconds(1);

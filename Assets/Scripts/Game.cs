@@ -1,16 +1,10 @@
+using System.Collections;
 using UnityEngine;
 
 public class Game : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    public virtual void StartGameIntro() {}
+    public virtual void AssignPlayer(PlayerControls playerControls, int id) {}
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    public virtual void AssignPlayer(PlayerControls playerControls, int id, bool isMainPlayer) { }
 }

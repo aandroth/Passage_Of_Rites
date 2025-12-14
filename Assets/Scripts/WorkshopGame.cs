@@ -13,7 +13,6 @@ public class WorkshopGame : Game
     public List<GameObject> m_supplyStationObjects;
     public List<PlayerStation> m_playerStations;
     public int m_playerStationIdx = 0;
-    public PlayerSupplyItem m_playerSupplyItem = null;
     public int m_playerScore = 0;
     [SerializeField] private float m_gameInitDelay = 0;
     [SerializeField] private MinigameTitleCard m_gameTitleCard;
@@ -35,6 +34,8 @@ public class WorkshopGame : Game
     public List<TrapType> m_trapsToComplete = new List<TrapType>();
     public List<Sprite> m_trapSprites = new List<Sprite>();
     public List<Sprite> m_supplySprites = new List<Sprite>();
+
+    private PlayerControls m_playerControls;
 
     private void Start()
     {
@@ -74,11 +75,13 @@ public class WorkshopGame : Game
             m_trapsToComplete.Add(name);
 
         m_playerStation.m_reportTrapCompleted = TrapCompleted;
-        AssignTrapToPlayerAndStation();
-        StartCoroutine(GameIntro());
     }
 
-    private IEnumerator GameIntro()
+    public override void StartGameIntro()
+    {
+        StartCoroutine(GameIntro());
+    }
+    public IEnumerator GameIntro()
     {
         float initDelayTime = m_gameInitDelay;
 
@@ -114,7 +117,20 @@ public class WorkshopGame : Game
             yield return null;
         }
 
+        m_playerControls.SetPlayerAsControllable();
         StartCoroutine(Countdown());
+    }
+
+    public override void AssignPlayer(PlayerControls playerControls, int id, bool isMainPlayer = false)
+    {
+        if (isMainPlayer) m_playerStationIdx = id;
+        playerControls.SetPlayerAtSpawnPoint(m_playerSpawnLocations[id]);
+        if (isMainPlayer)
+        {
+            m_playerControls = playerControls;
+            m_playerStationIdx = id;
+            AssignTrapToPlayerAndStation();
+        }
     }
 
     private IEnumerator Countdown()
@@ -163,7 +179,7 @@ public class WorkshopGame : Game
     public void AssignTrapToPlayerAndStation()
     {
         TrapType t = m_trapsToComplete[(int)(Random.value * m_trapsToComplete.Count)];
-        m_playerSupplyItem.AssignTrapToComplete(t);
+        m_playerControls.AssignTrapToPlayerSupplyItem(t);
         m_playerStation.AssignTrapToComplete(t);
     }
 
