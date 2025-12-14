@@ -48,7 +48,7 @@ public class GameController : MonoBehaviour
     {
         Vector3 spawnPosition = WorkshopGame.GetSpawnLocationForId(id);
 
-        GameObject go = GameObject.Instantiate(m_playerPrefab, spawnPosition, Quaternion.identity);
+        GameObject go = GameObject.Instantiate(m_playerPrefab, Vector3.zero, Quaternion.identity);
         go.GetComponent<PlayerControls>().m_id = id;
         go.GetComponent<PlayerControls>().m_isMainPlayer = isMainPlayer;
         go.GetComponent<PlayerControls>().SetPlayerAsMainOrOther(isMainPlayer);

@@ -68,10 +68,11 @@ MonoBehaviour:
   m_prevState: 0
   m_prevCarriedItem: 0
   m_isMoving: 0
-  m_testingMovement: 32
+  m_nonPlayerMovement: 32
   m_circleCollider: {fileID: 8946554184718114416}
   m_positionDeltaThreshold: 10
   m_state: 0
+  m_playerIsControllable: 0
   m_playerSupplyItem: {fileID: 8142477442602346506}
   m_otherPlayerSupplyItem: {fileID: 7925656358690165372}
 --- !u!58 &3828892960789034948
@@ -903,7 +904,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8809251617508250788}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
