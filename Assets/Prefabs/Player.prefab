@@ -55,6 +55,8 @@ MonoBehaviour:
   m_isMainPlayer: 0
   m_id: 0
   m_nameTextMesh: {fileID: 3064851676766117309}
+  m_titles: 
+  m_points: 0
   m_playerSprite: {fileID: 6747832155587253400}
   m_animator: {fileID: 7735265491983928664}
   m_animatorStatusEffect: {fileID: 4347719326063031909}
@@ -703,7 +705,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 10
   m_Sprite: {fileID: 4816469282236876923, guid: 6e61716f1ebb18241becea2973c9e7d2, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -958,7 +960,7 @@ MeshRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 9
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &3064851676766117309
 MonoBehaviour:

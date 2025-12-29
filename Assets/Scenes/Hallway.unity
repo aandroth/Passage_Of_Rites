@@ -2236,7 +2236,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 853139005483577130, guid: dabb22ec8374b5343b42cfaf80f428ba, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1482118009273460093, guid: dabb22ec8374b5343b42cfaf80f428ba, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2293,7 +2293,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8809251617508250788, guid: dabb22ec8374b5343b42cfaf80f428ba, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: dabb22ec8374b5343b42cfaf80f428ba, type: 3}
 --- !u!1 &802103352
 GameObject:
@@ -3496,8 +3499,7 @@ MonoBehaviour:
   - Chaditus
   - Aquin
   points: 00000000000000000000000007000000
-  nextLevel: 0
-  startOutro: 0
+  startOutro: 1
 --- !u!4 &1174159982
 Transform:
   m_ObjectHideFlags: 0
@@ -5657,8 +5659,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28fd43d43eaf36c49896ddaa5833a05f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_nextLevelIndex: 5
-  m_gameCountdownTime: 5
   m_supplyItemNames: 1
   m_supplyStations:
   - {fileID: 1580096091}
@@ -5715,7 +5715,6 @@ MonoBehaviour:
   - {fileID: -8542109544820341159, guid: 5393339c3088ef84cbddf3e65d1d92e1, type: 3}
   - {fileID: 279919546456459192, guid: 1c7ce2f76d5b5b046a4591ee4339f3b1, type: 3}
   m_playerControls: {fileID: 2079422247}
-  m_nextLevel: 5
 --- !u!4 &2008836773
 Transform:
   m_ObjectHideFlags: 0

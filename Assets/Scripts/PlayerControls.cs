@@ -7,6 +7,8 @@ public class PlayerControls : MonoBehaviour
     public bool m_isMainPlayer = false;
     public int m_id;
     public TMPro.TextMeshPro m_nameTextMesh;
+    public string m_titles;
+    public int m_points;
     public GameObject m_playerSprite;
     public Animator m_animator;
     public Animator m_animatorStatusEffect;

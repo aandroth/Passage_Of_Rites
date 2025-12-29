@@ -1,7 +1,9 @@
-using UnityEngine;
-using System.Collections.Generic;
-using Unity.VisualScripting;
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using TMPro;
+using Unity.VisualScripting;
+using UnityEngine;
 
 public class WorkshopGame : Game
 {
@@ -12,20 +14,21 @@ public class WorkshopGame : Game
     public List<WorkshopSupplyStation> m_supplyStations = new List<WorkshopSupplyStation>();
     public List<GameObject> m_supplyStationObjects;
     public List<PlayerStation> m_playerStations;
+    public GameObject m_announcementTextPanel;
+    public List<GameObject> m_winnerTextPanels;
+    public List<TMP_Text> m_winnerTexts;
     public int m_playerStationIdx = 0;
     public int m_playerScore = 0;
     [SerializeField] private float m_gameInitDelay = 0;
+    [SerializeField] private float m_holdOnWinnersDelay = 0;
     [SerializeField] private MinigameTitleCard m_gameTitleCard;
     [SerializeField] private BlackoutPanel m_blackoutCard;
-    [SerializeField] private int m_timeForGame;
     [SerializeField] private TimeDisplayed m_timeDisplayed;
     [SerializeField] private ThreeTwoOneGo_Countdown m_threeTwoOneGoCountdown;
 
     public PlayerStation m_playerStation;
     public List<Transform> m_playerSpawnLocations;
     public static List<Transform> m_playerTableLocations;
-    private enum GAME_STATE {INIT, PLAYING, GAME_OVER};
-    private GAME_STATE m_gameState = GAME_STATE.INIT;
 
     public static Dictionary<TrapType, SupplyItemName[]> m_trapToSuppliesDict = new Dictionary<TrapType, SupplyItemName[]>();
     public static Dictionary<TrapType, string> m_trapToNameDict = new Dictionary<TrapType, string>();
@@ -34,8 +37,10 @@ public class WorkshopGame : Game
     public List<TrapType> m_trapsToComplete = new List<TrapType>();
     public List<Sprite> m_trapSprites = new List<Sprite>();
     public List<Sprite> m_supplySprites = new List<Sprite>();
+    private IEnumerator m_playingGameCoroutine;
 
-    private PlayerControls m_playerControls;
+    [SerializeField] private PlayerControls m_playerControls;
+    [SerializeField] private int m_nextLevel;
 
     private void Start()
     {
@@ -77,11 +82,20 @@ public class WorkshopGame : Game
         m_playerStation.m_reportTrapCompleted = TrapCompleted;
     }
 
-    public override void StartGameIntro()
+    public override string GetTitle() { return "Trap-Crafter"; }
+
+    public override void StartGamePlaying(SignalReadinessDelegate signalGameControllerReady = null)
     {
-        StartCoroutine(GameIntro());
+        m_playerControls.SetPlayerAsControllable();
+        m_playingGameCoroutine = Countdown(signalGameControllerReady);
+        StartCoroutine(m_playingGameCoroutine);
     }
-    public IEnumerator GameIntro()
+
+    public override void StartGameIntro(SignalReadinessDelegate signalGameControllerReady = null)
+    {
+        StartCoroutine(GameIntro(signalGameControllerReady));
+    }
+    public IEnumerator GameIntro(SignalReadinessDelegate signalGameControllerReady = null)
     {
         float initDelayTime = m_gameInitDelay;
 
@@ -117,8 +131,74 @@ public class WorkshopGame : Game
             yield return null;
         }
 
-        m_playerControls.SetPlayerAsControllable();
-        StartCoroutine(Countdown());
+        signalGameControllerReady();
+    }
+    public override void StartGameOutro(SignalReadinessDelegate func = null)
+    {
+        StartCoroutine(GameOutro(func));
+    }
+    public IEnumerator GameOutro(SignalReadinessDelegate func = null)
+    {
+        // Show winner text
+        m_announcementTextPanel.SetActive(true);
+
+        // Fade to black
+        float holdOnWinnersTime = m_holdOnWinnersDelay;
+        while (holdOnWinnersTime > 0)
+        {
+            holdOnWinnersTime -= Time.deltaTime;
+            yield return null;
+        }
+
+        // Fade to black
+        float fadeToBlackTime = 3.0f;
+        m_blackoutCard.StartFadeIn(3);
+        while (fadeToBlackTime > 0)
+        {
+            fadeToBlackTime -= Time.deltaTime;
+            yield return null;
+        }
+
+        // Fade to black hold
+        fadeToBlackTime = 3.0f;
+        while (fadeToBlackTime > 0)
+        {
+            fadeToBlackTime -= Time.deltaTime;
+            yield return null;
+        }
+
+        func?.Invoke();
+    }
+
+    public override void SetPlayerPoints(string[] names, int[] points)
+    {
+        List<int> winnerIdx = new List<int>();
+
+        int highestPoints = -1;
+        foreach (var point in points)
+        {
+            if (point > highestPoints)
+                highestPoints = point;
+        }
+        for (int i = 0; i < points.Length; i++)
+        {
+            if (points[i] == highestPoints && points[i] > 0) 
+               winnerIdx.Add(i);
+            m_winnerTextPanels[i].SetActive(true);
+            m_winnerTexts[i].text = $"{names[i]}:\n\r{points[i]} points!";
+        }
+        m_announcementTextPanel.GetComponentInChildren<TMP_Text>().text = 
+            winnerIdx.Count > 1 ? "It's a Tie!" : "The Winner is\n\r";
+
+        if(winnerIdx.Count == 1)
+        {
+            int winIdx = winnerIdx[0];
+            m_announcementTextPanel.GetComponentInChildren<TMP_Text>().text += $"{names[winIdx]}!";
+        }
+        else if(winnerIdx.Count == 0)
+        {
+            m_announcementTextPanel.GetComponentInChildren<TMP_Text>().text += $"nobody...";
+        }
     }
 
     public override void AssignPlayer(PlayerControls playerControls, int id, bool isMainPlayer = false)
@@ -133,22 +213,32 @@ public class WorkshopGame : Game
         }
     }
 
-    private IEnumerator Countdown()
+    private IEnumerator Countdown(SignalReadinessDelegate signalGameControllerReady = null)
     {
-        float timeForGame = (float)m_timeForGame;
-        int prevTime = Mathf.FloorToInt(m_timeForGame);
+        Debug.Log("Workshop Countdown started");
+        float timeForGame = m_gameCountdownTime;
+        int prevTime = Mathf.FloorToInt(m_gameCountdownTime);
         while (timeForGame > 0)
         {
             timeForGame -= Time.deltaTime;
             if(prevTime != Mathf.FloorToInt(timeForGame))
             {
                 prevTime = Mathf.FloorToInt(timeForGame);
+                prevTime = Mathf.Max(0, prevTime);
                 m_timeDisplayed.SetTime(prevTime);
             }
             yield return null;
         }
-        timeForGame = 0;
+        EndGame(signalGameControllerReady);
+    }
+
+    public override void EndGame(SignalReadinessDelegate signalGameControllerReady = null)
+    {
+        StopCoroutine(m_playingGameCoroutine);
         m_timeDisplayed.SetTime(0);
+        m_playerControls.SetPlayerAsNotControllable();
+        m_gameState = GAME_STATE.GAME_OVER;
+        signalGameControllerReady?.Invoke();
     }
 
     private IEnumerator ThreeTwoOneGo_Countdown(float totalTime)
@@ -178,7 +268,7 @@ public class WorkshopGame : Game
 
     public void AssignTrapToPlayerAndStation()
     {
-        TrapType t = m_trapsToComplete[(int)(Random.value * m_trapsToComplete.Count)];
+        TrapType t = m_trapsToComplete[(int)(UnityEngine.Random.value * m_trapsToComplete.Count)];
         m_playerControls.AssignTrapToPlayerSupplyItem(t);
         m_playerStation.AssignTrapToComplete(t);
     }
@@ -197,4 +287,6 @@ public class WorkshopGame : Game
             AssignTrapToPlayerAndStation();
         }
     }
+
+    public override int GameGetNextLevelIndex() { return 5; }
 }

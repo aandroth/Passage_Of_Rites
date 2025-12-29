@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -25,9 +26,15 @@ public class GameController : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(this);
+
             m_backend.GetPlayerData = GetPlayerChangedData;
             m_backend.SetPlayerChangedDataToCurrentValues = SetPlayerChangedDataToCurrentValues;
             m_backend.ReceivedMessageForGameController = ReceivedMessage;
+            m_backend.GetIdFromGameController = () => { return m_mainPlayerId; };
+            
+            Debug.Log("Calling GameIntro");
+            m_game?.StartGameIntro();
+            Debug.Log("Called GameIntro");
         }
     }
 
@@ -35,8 +42,6 @@ public class GameController : MonoBehaviour
     {
         if (m_playersDict.ContainsKey(id))
             m_playersDict[int.Parse(playerData[1])].PutChangedData(playerData);
-        //else
-        //    CreateCharacter(false, id, playerData);
     }
 
     public void SetPlayerLocation(Vector3 position)
@@ -46,8 +51,6 @@ public class GameController : MonoBehaviour
 
     public PlayerControls CreateCharacter(bool isMainPlayer, int id, string[] data)
     {
-        Vector3 spawnPosition = WorkshopGame.GetSpawnLocationForId(id);
-
         GameObject go = GameObject.Instantiate(m_playerPrefab, Vector3.zero, Quaternion.identity);
         go.GetComponent<PlayerControls>().m_id = id;
         go.GetComponent<PlayerControls>().m_isMainPlayer = isMainPlayer;
@@ -84,9 +87,15 @@ public class GameController : MonoBehaviour
 
     private void OnLevelWasLoaded(int level)
     {
-        m_game = GameObject.FindAnyObjectByType<Game>();
-        if (m_game != null)
-            m_backend.SignalReadinessToServer(m_mainPlayerId);
+        if (this == Instance) {
+            m_game = GameObject.FindAnyObjectByType<Game>();
+            if (m_game != null)
+            {
+                m_backend.SignalReadinessToServer(m_mainPlayerId);
+                if (level == 0)
+                    m_game.SendNameToTitleSceneController(m_playersDict[m_mainPlayerId].m_nameTextMesh.text);
+            }
+        }
     }
 
     public void DestroyPlayer()
@@ -99,10 +108,27 @@ public class GameController : MonoBehaviour
         }
     }
 
+    public void CallbackForGameControllerSendReadySignal(bool isEndScene = false)
+    {
+        if(isEndScene) 
+            m_backend.RequestServerToLoadLevel(0);
+
+        m_backend?.SignalReadinessToServer(m_mainPlayerId);
+    }
+
     public void ReceivedMessage(string data, string action, string[] playerData)
     {
-        int id = playerData.Length >= 2 ? int.Parse(playerData[1]) : -1;
-        Debug.Log($"Received: {data} with action {action} and id {id}, playerData length: {playerData.Length}");
+        int id = -1;
+        if(playerData.Length >= 2)
+            try
+            {
+                id = playerData.Length >= 2 ? int.Parse(playerData[1]) : -1;
+                Debug.Log($"Received: {data} with action {action} and id {id}, playerData length: {playerData.Length}");
+            }
+            catch
+            {
+                Debug.LogWarning($"Failed to parse player id from data: {data}");
+            }
 
 
         switch (action)
@@ -118,17 +144,41 @@ public class GameController : MonoBehaviour
                 if (playerData.Length >= 2) 
                     SceneManager.LoadScene(int.Parse(playerData[1]));
                 break;
-            case "Game_Start":
+            case "Start_Intro":
                 if (playerData.Length >= 2)
                 {
                     Debug.Log("Calling GameIntro");
-                    m_game.StartGameIntro();
+                    m_game?.StartGameIntro(CallbackForGameControllerSendReadySignal);
                     Debug.Log("Called GameIntro");
                 }
                 break;
-            case "NewPlayer":
+            case "Call_Countdown":
+                if (m_isGameOwner)
+                {
+                    m_backend?.RequestServerToStartCountdown(m_game.GameGetLevelCountdownTime());
+                }
+                break;
+            case "Start_Countdown":
+                m_game?.StartGamePlaying(CallbackForGameControllerSendReadySignal);
+                break;
+            case "Stop_Game":
+                if (!(m_game.GetGameState() == Game.GAME_STATE.GAME_OVER))
+                    m_game?.EndGame(CallbackForGameControllerSendReadySignal);
+                break;
+            case "Start_Outro":
+                Debug.Log("Calling GameOutro");
+                m_game?.StartGameOutro(CallbackForGameControllerSendReadySignal);
+                Debug.Log("Called GameOutro");
+                break;
+            case "Ready_For_Next_Level":
+                if (m_isGameOwner)
+                {
+                    m_backend.RequestServerToLoadLevel(m_game.GameGetNextLevelIndex());
+                }
+                break;
+            case "New_Player":
                 PlayerControls pc = CreateCharacter(m_mainPlayerId == id, id, playerData);
-                m_game.AssignPlayer(pc, id, m_mainPlayerId == id);
+                m_game?.AssignPlayer(pc, id, m_mainPlayerId == id);
                 if (m_mainPlayerId == id)
                     m_backend.SignalReadinessToServer(id);
                 break;

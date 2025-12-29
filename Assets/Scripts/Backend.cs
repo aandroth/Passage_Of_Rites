@@ -21,6 +21,8 @@ public class Backend : MonoBehaviour
     public SetPlayerChangedDataToCurrentValuesDelegate SetPlayerChangedDataToCurrentValues;
     public delegate void GetTextDataDelegate(string s);
     public GetTextDataDelegate GetTextData;
+    public delegate int GetIdFromGameControllerDelegate();
+    public GetIdFromGameControllerDelegate GetIdFromGameController;
 
     public string m_apiGatewayUrl = "https://t2lfwpskr0.execute-api.us-west-2.amazonaws.com/dev";
     public string m_serverUrl = "localhost"; //"18.237.4.137";
@@ -61,7 +63,7 @@ public class Backend : MonoBehaviour
 
 
 
-    public async void StartWebSocketConnection()
+    public async System.Threading.Tasks.Task StartWebSocketConnection(string playerName = "")
     {
         if(m_connected) await m_webSocket.Close();
 
@@ -71,6 +73,11 @@ public class Backend : MonoBehaviour
         {
             Debug.Log("Connection open!");
             m_connected = true;
+            if(playerName != "")
+            {
+                // Send name request to server
+                int id = GetIdFromGameController();
+            }
         };
 
         m_webSocket.OnError += (e) =>
@@ -183,12 +190,25 @@ public class Backend : MonoBehaviour
         }
         Debug.Log($"Request finished");
     }
-    public void RequestServerToLoadLevel(int levelIdx)
+    public System.Threading.Tasks.Task RequestServerToChangeName(string name)
     {
         if (this == Instance)
         {
-            //"Action, levelName
-            //      0,         1
+            //"Action, id, name
+            //      0,  1,    2
+            string nameChangeRequest = $"Change_Name,{GetIdFromGameController()},{name}";
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(nameChangeRequest);
+            m_webSocket.Send(bytes);
+            Debug.Log($"Name change request finished");
+        }
+
+        return System.Threading.Tasks.Task.CompletedTask;
+    }
+    public void RequestServerToLoadLevel(int levelIdx)
+    {
+        if (this == Instance && m_connected)
+        {
             string loadLevelRequest = $"Load_Level,{levelIdx}";
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(loadLevelRequest);
@@ -196,9 +216,20 @@ public class Backend : MonoBehaviour
             Debug.Log($"Request finished");
         }
     }
+    public void RequestServerToStartCountdown(float levelCountdownTime)
+    {
+        if (this == Instance && m_connected)
+        {
+            string startCountdownRequest = $"Start_Countdown,{levelCountdownTime}";
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(startCountdownRequest);
+            m_webSocket.Send(bytes);
+            Debug.Log($"Request finished");
+        }
+    }
     public void SignalReadinessToServer(int id)
     {
-        if (this == Instance)
+        if (this == Instance && m_connected)
         {
             //"Action, id
             //      0,  1
@@ -211,7 +242,7 @@ public class Backend : MonoBehaviour
     }
     public void RequestServerToStartGame()
     {
-        if (this == Instance)
+        if (this == Instance && m_connected)
         {
             //"Action, id
             //      0,  1
@@ -226,7 +257,7 @@ public class Backend : MonoBehaviour
 
     public void RequestKillServer()
     {
-        if (this == Instance)
+        if (this == Instance && m_connected)
         {
             StartCoroutine(RequestKillServerCoroutine());
         }
@@ -368,13 +399,19 @@ public class Backend : MonoBehaviour
             case "Init":
             case "Make_Owner":
             case "Load_Level":
-            case "Game_Start":
-            case "Player":
-            case "NewPlayer":
+            case "Start_Intro":
+            case "Call_Countdown":
+            case "Start_Countdown":
+            case "Game_Ready":
+            case "Stop_Game":
+            case "Start_Outro":
+            case "New_Player":
+            case "Ready_For_Next_Level":
             case "Update":
                 SendServerDataToGameController(data, action, playerData);
                 break;
             default:
+                Debug.LogWarning($"Unhandled action at backend: {action}");
                 break;
         }
     }
