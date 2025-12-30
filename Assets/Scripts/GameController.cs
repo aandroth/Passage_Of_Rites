@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -15,6 +16,8 @@ public class GameController : MonoBehaviour
     public Backend m_backend;
     public Game m_game = null;
     [SerializeField] string m_titleSceneName = "TitleScene";
+    [SerializeField] bool m_gameIsPlaying = false;
+
 
     public static GameController Instance { get; private set; }
 
@@ -104,7 +107,10 @@ public class GameController : MonoBehaviour
             {
                 m_backend.SignalReadinessToServer(m_mainPlayerId);
                 if (scene.name == m_titleSceneName)
-                    m_game.SendNameToTitleSceneController(m_playersDict[m_mainPlayerId].m_nameTextMesh.text);
+                { 
+                    if(m_mainPlayerId != -1)
+                        m_game.SendNameToTitleSceneController(m_playersDict[m_mainPlayerId].m_nameTextMesh.text);
+                }
             }
         }
     }
@@ -124,13 +130,30 @@ public class GameController : MonoBehaviour
         if(isEndScene) 
             m_backend.RequestServerToLoadLevel(0);
 
-        m_backend?.SignalReadinessToServer(m_mainPlayerId);
+        if (m_gameIsPlaying)
+        {
+            List<Game.PlayerInfo> playerInfos = new List<Game.PlayerInfo>();
+            foreach (var player in m_playersDict)
+            {
+                playerInfos.Add(new Game.PlayerInfo
+                {
+                    index = player.Key,
+                    name = player.Value.m_nameTextMesh.text,
+                    points = player.Value.m_points
+                });
+            }
+            m_gameIsPlaying = false;
+            m_game?.SetPlayerPoints(playerInfos);
+        }
+        else
+            m_backend?.SignalReadinessToServer(m_mainPlayerId);
     }
 
     public void ReceivedMessage(string data, string action, string[] playerData)
     {
         int id = -1;
-        if(playerData.Length >= 2)
+        if (playerData.Length >= 2)
+        {
             try
             {
                 id = playerData.Length >= 2 ? int.Parse(playerData[1]) : -1;
@@ -140,7 +163,7 @@ public class GameController : MonoBehaviour
             {
                 Debug.LogWarning($"Failed to parse player id from data: {data}");
             }
-
+        }
 
         switch (action)
         {
@@ -171,6 +194,7 @@ public class GameController : MonoBehaviour
                 break;
             case "Start_Countdown":
                 m_game?.StartGamePlaying(CallbackForGameControllerSendReadySignal);
+                m_gameIsPlaying = true;
                 break;
             case "Stop_Game":
                 if (!(m_game.GetGameState() == Game.GAME_STATE.GAME_OVER))

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class Game : MonoBehaviour
@@ -10,9 +11,20 @@ public abstract class Game : MonoBehaviour
     public enum GAME_STATE { INIT, PLAYING, GAME_OVER };
     protected GAME_STATE m_gameState = GAME_STATE.INIT;
 
+    public delegate void GetPlayerNameAndPointsFromGameController(int idx);
+    public GetPlayerNameAndPointsFromGameController m_getPlayerNameAndPointsFromGameController;
+
+
+    public struct PlayerInfo 
+    {
+        public int index;
+        public string name;
+        public int points;
+    }
+
     public virtual void StartGameIntro(SignalReadinessDelegate signalGameControllerReady = null) {  }
     public virtual void StartGameOutro(SignalReadinessDelegate signalGameControllerReady = null) { }
-    public virtual void SetPlayerPoints(string[] names, int[] points) { }
+    public virtual void SetPlayerPoints(List<PlayerInfo> playInfoList) { }
     public virtual void AssignPlayer(PlayerControls playerControls, int id, bool isMainPlayer = false) { }
     public virtual string GetTitle() { return ""; }
     public virtual bool GameIsMiniGame() { return true; }
@@ -20,6 +32,7 @@ public abstract class Game : MonoBehaviour
     public virtual float GameGetLevelCountdownTime() { return m_gameCountdownTime; }
     public virtual void StartGamePlaying(SignalReadinessDelegate signalGameControllerReady = null) {}
     public virtual GAME_STATE GetGameState() { return m_gameState; }
-    public virtual void EndGame(SignalReadinessDelegate signalGameControllerReady = null) {}
+    public virtual IEnumerator EndGame(SignalReadinessDelegate signalGameControllerReady = null) { yield return null; }
     public virtual void SendNameToTitleSceneController(string name) {}
+
 }

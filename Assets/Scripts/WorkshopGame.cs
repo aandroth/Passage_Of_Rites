@@ -37,10 +37,13 @@ public class WorkshopGame : Game
     public List<TrapType> m_trapsToComplete = new List<TrapType>();
     public List<Sprite> m_trapSprites = new List<Sprite>();
     public List<Sprite> m_supplySprites = new List<Sprite>();
-    private IEnumerator m_playingGameCoroutine;
+    private IEnumerator m_countdownCoroutine;
 
     [SerializeField] private PlayerControls m_playerControls;
     [SerializeField] private int m_nextLevel;
+    [SerializeField] private float m_endGameHornHoldTime;
+    [SerializeField] private float m_endGameScoresHoldTime;
+
 
     private void Start()
     {
@@ -87,8 +90,8 @@ public class WorkshopGame : Game
     public override void StartGamePlaying(SignalReadinessDelegate signalGameControllerReady = null)
     {
         m_playerControls.SetPlayerAsControllable();
-        m_playingGameCoroutine = Countdown(signalGameControllerReady);
-        StartCoroutine(m_playingGameCoroutine);
+        m_countdownCoroutine = Countdown(signalGameControllerReady);
+        StartCoroutine(m_countdownCoroutine);
     }
 
     public override void StartGameIntro(SignalReadinessDelegate signalGameControllerReady = null)
@@ -170,32 +173,31 @@ public class WorkshopGame : Game
         func?.Invoke();
     }
 
-    public override void SetPlayerPoints(string[] names, int[] points)
+    public override void SetPlayerPoints(List<PlayerInfo> playerInfoList)
     {
-        List<int> winnerIdx = new List<int>();
+        playerInfoList.Sort((a, b) => b.points.CompareTo(a.points));
 
-        int highestPoints = -1;
-        foreach (var point in points)
+        m_announcementTextPanel.SetActive(true);
+        foreach (var playerInfoEntry in playerInfoList)
         {
-            if (point > highestPoints)
-                highestPoints = point;
+            m_winnerTextPanels[playerInfoEntry.index].SetActive(true);
+            m_winnerTexts[playerInfoEntry.index].text = $"{playerInfoEntry.name}:\n\r{playerInfoEntry.points} points!";
         }
-        for (int i = 0; i < points.Length; i++)
-        {
-            if (points[i] == highestPoints && points[i] > 0) 
-               winnerIdx.Add(i);
-            m_winnerTextPanels[i].SetActive(true);
-            m_winnerTexts[i].text = $"{names[i]}:\n\r{points[i]} points!";
-        }
-        m_announcementTextPanel.GetComponentInChildren<TMP_Text>().text = 
-            winnerIdx.Count > 1 ? "It's a Tie!" : "The Winner is\n\r";
 
-        if(winnerIdx.Count == 1)
+        bool isTie = false;
+        if(playerInfoList.Count > 2 && 
+           playerInfoList[0].points == playerInfoList[1].points && 
+           playerInfoList[0].points > 0) 
+            isTie = true;
+
+        m_announcementTextPanel.GetComponentInChildren<TMP_Text>().text =
+            (isTie) ? "It's a Tie!" : "The Winner is\n\r";
+
+        if(!isTie && playerInfoList[0].points > 0)
         {
-            int winIdx = winnerIdx[0];
-            m_announcementTextPanel.GetComponentInChildren<TMP_Text>().text += $"{names[winIdx]}!";
+            m_announcementTextPanel.GetComponentInChildren<TMP_Text>().text += $"{playerInfoList[0].name}!";
         }
-        else if(winnerIdx.Count == 0)
+        else if(playerInfoList[0].points <= 0)
         {
             m_announcementTextPanel.GetComponentInChildren<TMP_Text>().text += $"nobody...";
         }
@@ -229,33 +231,35 @@ public class WorkshopGame : Game
             }
             yield return null;
         }
-        EndGame(signalGameControllerReady);
+        StartCoroutine(EndGame(signalGameControllerReady));
     }
 
-    public override void EndGame(SignalReadinessDelegate signalGameControllerReady = null)
+    public override IEnumerator EndGame(SignalReadinessDelegate signalGameControllerReady = null)
     {
-        StopCoroutine(m_playingGameCoroutine);
+        StopCoroutine(m_countdownCoroutine);
         m_timeDisplayed.SetTime(0);
         m_playerControls.SetPlayerAsNotControllable();
         m_gameState = GAME_STATE.GAME_OVER;
-        signalGameControllerReady?.Invoke();
-    }
 
-    private IEnumerator ThreeTwoOneGo_Countdown(float totalTime)
-    {
-        float timePerNumber = totalTime * 0.25f;
-        float timeCount = timePerNumber;
-        int currCount = 3;
-        while(currCount > 0)
+        // Blow endgame horn sound here
+
+        // Hold on endgame sound for a second
+        float endGameHornHoldTime = m_endGameHornHoldTime;
+        while (endGameHornHoldTime > 0)
         {
-            while (timeCount > 0)
-            {
-                timeCount -= Time.deltaTime;
-                yield return null;
-            }
-            currCount--;
-
+            endGameHornHoldTime -= Time.deltaTime;
+            yield return null;
         }
+        signalGameControllerReady?.Invoke(); // Signals GameController that the game is over
+
+        float endGameScoresHoldTime = m_endGameScoresHoldTime;
+        while (endGameScoresHoldTime > 0)
+        {
+            endGameScoresHoldTime -= Time.deltaTime;
+            yield return null;
+        }
+
+        signalGameControllerReady?.Invoke(); // Signals GameController that the scene has finished, and the next can be loaded
     }
 
     public static Vector3 GetSpawnLocationForId(int id)

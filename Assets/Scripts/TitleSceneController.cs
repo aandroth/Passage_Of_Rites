@@ -11,6 +11,8 @@ public class TitleSceneController : Game
     [SerializeField] Backend m_backend = null;
     public GameObject m_buttonPrefab;
     public GameObject m_buttonParent;
+    public GameObject m_buttonStartConnection;
+    public GameObject m_buttonStopConnection;
     public float      m_buttonOffset;
     //public Transform  m_buttonStartPos;
     [SerializeField] List<GameObject> m_ipButtonsList = new List<GameObject>();
@@ -122,4 +124,9 @@ public class TitleSceneController : Game
         m_playerNameInputField.text = name;
     }
 
+    public void SwapStartAndStopConnectionButtons()
+    {
+        m_buttonStartConnection.SetActive(!m_buttonStartConnection.activeSelf);
+        m_buttonStopConnection.SetActive(!m_buttonStopConnection.activeSelf);
+    }
 }
