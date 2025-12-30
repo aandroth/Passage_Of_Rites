@@ -2807,8 +2807,8 @@ MonoBehaviour:
   m_buttonParent: {fileID: 609511115}
   m_buttonOffset: -80
   m_ipButtonsList: []
-  m_startGame: {fileID: 1987848862}
-  m_playerName: {fileID: 555479308}
+  m_startGameButton: {fileID: 0}
+  m_playerNameInputField: {fileID: 1229312337}
   m_firstLevel: 2
 --- !u!4 &1376700246
 Transform:

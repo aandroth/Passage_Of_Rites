@@ -14,8 +14,19 @@ public class GameController : MonoBehaviour
 
     public Backend m_backend;
     public Game m_game = null;
+    [SerializeField] string m_titleSceneName = "TitleScene";
 
     public static GameController Instance { get; private set; }
+
+    public void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnLevelFinishedLoading;
+    }
+
+    public void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnLevelFinishedLoading;
+    }
 
     private void Awake()
     {
@@ -85,14 +96,14 @@ public class GameController : MonoBehaviour
         if(m_mainPlayerId != -1) m_playersDict[m_mainPlayerId].SetChangedDataToCurrentValues();
     }
 
-    private void OnLevelWasLoaded(int level)
+    private void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode)
     {
         if (this == Instance) {
             m_game = GameObject.FindAnyObjectByType<Game>();
             if (m_game != null)
             {
                 m_backend.SignalReadinessToServer(m_mainPlayerId);
-                if (level == 0)
+                if (scene.name == m_titleSceneName)
                     m_game.SendNameToTitleSceneController(m_playersDict[m_mainPlayerId].m_nameTextMesh.text);
             }
         }

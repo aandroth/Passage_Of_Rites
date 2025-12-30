@@ -10,10 +10,12 @@ public class PlayerControls : MonoBehaviour
     public string m_titles;
     public int m_points;
     public GameObject m_playerSprite;
-    public Animator m_animator;
+    public Animator m_animatorBody;
     public Animator m_animatorStatusEffect;
     public string m_walkCycleName;
+    public string m_walkCycleEyesName;
     public string m_idleCycleName;
+    public string m_idleCycleEyesName;
     public Vector2 m_position;
     public Color m_color;
     public float m_speed;
@@ -43,7 +45,7 @@ public class PlayerControls : MonoBehaviour
         {
             Debug.LogError($"PlayerController has no assigned spriteRenderer!");
         }
-        if(m_animator == null) m_animator = m_playerSprite.GetComponent<Animator>();
+        if(m_animatorBody == null) m_animatorBody = m_playerSprite.GetComponent<Animator>();
         m_prevTransformData = new List<float>();
         m_prevTransformData.Add(transform.localPosition.x);
         m_prevTransformData.Add(transform.localPosition.y);
@@ -120,8 +122,7 @@ public class PlayerControls : MonoBehaviour
     {
         if(m_playerSprite != null) flipSpriteIfOppositeToDirection(direction, m_playerSprite);
 
-        if (m_animator != null && !m_animator.GetCurrentAnimatorStateInfo(0).IsName(m_walkCycleName))
-            m_animator.Play(m_walkCycleName);
+        PlayWalkCycle();
 
         Vector3 position = transform.localPosition;
         float movementDelta = Time.deltaTime * m_speed * direction;
@@ -146,8 +147,7 @@ public class PlayerControls : MonoBehaviour
 
     public void MoveUpDown(int direction)
     {
-        if (m_animator != null && !m_animator.GetCurrentAnimatorStateInfo(0).IsName(m_walkCycleName))
-            m_animator.Play(m_walkCycleName);
+        PlayWalkCycle();
 
         Vector3 position = transform.localPosition;
         float movementDelta = Time.deltaTime * m_speed * direction;
@@ -160,7 +160,7 @@ public class PlayerControls : MonoBehaviour
 
     public void MoveStop()
     {
-        m_animator.Play(m_idleCycleName);
+        PlayIdleCycle();
         m_state = PLAYER_STATE.IDLE;
     }
 
@@ -229,10 +229,10 @@ public class PlayerControls : MonoBehaviour
                 switch (m_state)
                 {
                     case PLAYER_STATE.IDLE:
-                        m_animator.Play(m_idleCycleName);
+                        PlayIdleCycle();
                         break;
                     case PLAYER_STATE.MOVING:
-                        m_animator.Play(m_walkCycleName);
+                        PlayWalkCycle();
                         break;
                     case PLAYER_STATE.DAZED:
                         Dazed();
@@ -273,10 +273,10 @@ public class PlayerControls : MonoBehaviour
             switch (m_state)
             {
                 case PLAYER_STATE.IDLE:
-                    m_animator.Play(m_idleCycleName);
+                    PlayIdleCycle();
                     break;
                 case PLAYER_STATE.MOVING:
-                    m_animator.Play(m_walkCycleName);
+                    PlayWalkCycle();
                     break;
                 case PLAYER_STATE.DAZED:
                     Dazed();
@@ -307,7 +307,7 @@ public class PlayerControls : MonoBehaviour
     {
         m_animatorStatusEffect.gameObject.SetActive(true);
         m_animatorStatusEffect.Play("Dazed");
-        m_animator.speed = 0;
+        m_animatorBody.speed = 0;
         while (timeDazed > 0)
         {
             timeDazed -= Time.deltaTime;
@@ -317,7 +317,7 @@ public class PlayerControls : MonoBehaviour
         m_state = PLAYER_STATE.IDLE;
         m_animatorStatusEffect.StopPlayback();
         m_animatorStatusEffect.gameObject.SetActive(false);
-        m_animator.speed = 1;
+        m_animatorBody.speed = 1;
     }
 
     public void AssignTrapToPlayerSupplyItem(WorkshopGame.TrapType t)
@@ -333,5 +333,18 @@ public class PlayerControls : MonoBehaviour
     public void DestroySelf()
     {
         Destroy(gameObject);
+    }
+
+
+    private void PlayWalkCycle()
+    {
+        if (m_animatorBody != null && !m_animatorBody.GetCurrentAnimatorStateInfo(0).IsName(m_walkCycleName))
+            m_animatorBody.Play(m_walkCycleName);
+    }
+
+    private void PlayIdleCycle()
+    {
+        if (m_animatorBody != null && !m_animatorBody.GetCurrentAnimatorStateInfo(0).IsName(m_walkCycleName))
+            m_animatorBody.Play(m_idleCycleName);
     }
 }
