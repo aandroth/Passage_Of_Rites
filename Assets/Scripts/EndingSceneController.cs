@@ -10,21 +10,13 @@ public class EndingSceneController : Game
     [SerializeField] TMP_Text m_weGatherToHonorText;
     [SerializeField] float m_showHonorTime;
     [SerializeField] float m_showPlayerInfoTime;
-    [SerializeField] float m_showBlankTime = 2f;
     [SerializeField] float m_fadeBlackoutOutTime = 2f;
     [SerializeField] float m_fadeBlackoutInTime = 2f;
     [SerializeField] float m_showThanksTime;
     [SerializeField] List<PlayerInfo> m_playerInfoList;
-    [SerializeField] int m_titleSceneLevel = 0;
     [SerializeField] GameObject[] m_spawnLocations = null;
     [SerializeField] BlackoutPanel m_blackoutPanel = null;
 
-    private struct PlayerInfo
-    {
-        public string name;
-        public string titles;
-        public int points;
-    }
 
     public void Awake()
     {
@@ -130,7 +122,7 @@ public class EndingSceneController : Game
         {
             name = playerControls.m_nameTextMesh.text,
             titles = playerControls.m_titles,
-            points = playerControls.m_points
+            points = playerControls.m_totalPoints
         });
         playerControls.transform.position = m_spawnLocations[id].transform.position;
         playerControls.m_playerSprite.transform.localScale = m_spawnLocations[id].transform.localScale;

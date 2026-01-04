@@ -1,16 +1,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static WorkshopGame;
+using static Game;
+using static ItemObjective;
+using static ItemObjective_Trap ;
 
 public class PlayerSupplyItem : MonoBehaviour, IAccessibleSupplyItem
 {
     public SpriteRenderer m_supplyCarriedSpriteRenderer;
     public SupplyItemName m_supplyStationResourceName;
-    public List<SupplyItemName> m_neededSuppliesList;
+    public List<SupplyItemName> m_neededSuppliesList = new List<SupplyItemName>();
 
-    List<Interactable> m_interactablesInRangeAndMouseFocus = new List<Interactable>();
-    public List<Interactable> m_interactablesInRange = new List<Interactable>();
+    [SerializeField] Interactable m_closestInteractableToMouse = null;
+    List<Interactable> m_interactablesInPlayerRangeAndMouseRange = new List<Interactable>();
+    public List<Interactable> m_interactablesInPlayerRange = new List<Interactable>();
     public CircleCollider2D m_circleCollider;
 
     public MouseFollowingCollider m_mouseFollowingCollider;
@@ -18,6 +21,7 @@ public class PlayerSupplyItem : MonoBehaviour, IAccessibleSupplyItem
     Vector3 screenPointOfMouse;
 
     public bool m_mouseColliderFrozen = false;
+    [SerializeField] private bool m_mouseIsControllable = false;
 
     private void Start()
     {
@@ -27,29 +31,31 @@ public class PlayerSupplyItem : MonoBehaviour, IAccessibleSupplyItem
 
     private void Update()
     {
-        screenPointOfMouse = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        screenPointOfMouse.z = 0;
-
-        if (!m_mouseColliderFrozen)
+        if (m_mouseIsControllable)
         {
-            m_mouseFollowingCollider.transform.position = screenPointOfMouse;
-        }
+            screenPointOfMouse = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            screenPointOfMouse.z = 0;
 
-        if(Input.GetMouseButtonUp(0))
-        {
-            ExecuteInteraction();
+            if (!m_mouseColliderFrozen)
+            {
+                m_mouseFollowingCollider.transform.position = screenPointOfMouse;
+            }
+
+            if (Input.GetMouseButtonUp(0))
+            {
+                ExecuteInteraction();
+            }
         }
     }
 
-    public void AssignTrapToComplete(TrapType trapName)
+    public void AssignNeededSupplyItems(List<SupplyItemName> neededSuppliesList)
     {
-        Debug.Log("TrapAssignedToPlayer");
-        m_neededSuppliesList = WorkshopGame.m_trapToSuppliesDict[trapName].ToList();
+        m_neededSuppliesList = neededSuppliesList;
     }
 
     public void ExecuteInteraction()
     {
-        if (m_interactablesInRangeAndMouseFocus.Count > 0)
+        if (m_interactablesInPlayerRangeAndMouseRange.Count > 0)
         {
             Interactable closestInteractable = GetClosestInteractableFromInteractablesList();
             if (closestInteractable.PlayerCanInteract(m_supplyStationResourceName, m_neededSuppliesList))
@@ -61,19 +67,21 @@ public class PlayerSupplyItem : MonoBehaviour, IAccessibleSupplyItem
 
     public void AddInteractableToFocusListIfWithinRangeAndMouse(Interactable interactable)
     {
-        if (m_interactablesInRange.Contains(interactable) && m_mouseFollowingCollider.m_interactablesInCollider.Contains(interactable))
+        if (m_interactablesInPlayerRange.Contains(interactable) && m_mouseFollowingCollider.m_interactablesInCollider.Contains(interactable))
         {
-            m_interactablesInRangeAndMouseFocus.Add(interactable);
-            iCount = m_interactablesInRangeAndMouseFocus.Count;
+            m_interactablesInPlayerRangeAndMouseRange.Add(interactable);
+            iCount = m_interactablesInPlayerRangeAndMouseRange.Count;
+            _ = GetClosestInteractableFromInteractablesList();
         }
     }
 
     public void RemoveInteractableIfInFocusList(Interactable interactable)
     {
-        if (m_interactablesInRangeAndMouseFocus.Contains(interactable))
+        if (m_interactablesInPlayerRangeAndMouseRange.Contains(interactable))
         {
-            m_interactablesInRangeAndMouseFocus.Remove(interactable);
-            iCount = m_interactablesInRangeAndMouseFocus.Count;
+            m_interactablesInPlayerRangeAndMouseRange.Remove(interactable);
+            iCount = m_interactablesInPlayerRangeAndMouseRange.Count;
+            _ = GetClosestInteractableFromInteractablesList();
         }
     }
 
@@ -81,7 +89,7 @@ public class PlayerSupplyItem : MonoBehaviour, IAccessibleSupplyItem
     {
         float minDistance = float.MaxValue;
         Interactable closestInteractable = null;
-        foreach (var item in m_interactablesInRangeAndMouseFocus)
+        foreach (var item in m_interactablesInPlayerRangeAndMouseRange)
         {
             float dist = Vector3.Distance(m_mouseFollowingCollider.transform.position, item.GetCenterPoint());
             if (minDistance > dist)
@@ -90,12 +98,18 @@ public class PlayerSupplyItem : MonoBehaviour, IAccessibleSupplyItem
                 closestInteractable = item;
             }
         }
+        if(m_closestInteractableToMouse != closestInteractable)
+        {
+            m_closestInteractableToMouse?.OffFocus();
+            closestInteractable?.OnFocus();
+            m_closestInteractableToMouse = closestInteractable;
+        }
         return closestInteractable;
     }
 
     public void InteractWithClosestInteractable(Interactable closestInteractable)
     {
-        if(closestInteractable.m_isSupplier)
+        if(closestInteractable.IsSupplier())
             ActivateAndSetSupplyItem(closestInteractable.Interact(m_supplyStationResourceName, m_neededSuppliesList));
         else
         {
@@ -109,7 +123,7 @@ public class PlayerSupplyItem : MonoBehaviour, IAccessibleSupplyItem
     public void ActivateAndSetSupplyItem(SupplyItemName supplyName)
     {
         m_supplyCarriedSpriteRenderer.gameObject.SetActive(true);
-        m_supplyCarriedSpriteRenderer.sprite = m_nameToSpriteDict[supplyName];
+        m_supplyCarriedSpriteRenderer.sprite = SpriteOfSupplyItem(supplyName);
         m_supplyStationResourceName = supplyName;
     }
     public void DeactivateAndRemoveSupplyItem()
@@ -125,7 +139,7 @@ public class PlayerSupplyItem : MonoBehaviour, IAccessibleSupplyItem
         Interactable interactable = collision.gameObject.GetComponent<Interactable>();
         if (interactable != null)
         {
-            m_interactablesInRange.Add(interactable);
+            m_interactablesInPlayerRange.Add(interactable);
             AddInteractableToFocusListIfWithinRangeAndMouse(interactable);
         }
     }
@@ -135,19 +149,23 @@ public class PlayerSupplyItem : MonoBehaviour, IAccessibleSupplyItem
         Interactable interactable = collision.gameObject.GetComponent<Interactable>();
         if (interactable != null)
         {
-            m_interactablesInRange.Remove(interactable);
+            m_interactablesInPlayerRange.Remove(interactable);
             RemoveInteractableIfInFocusList(collision.gameObject.GetComponent<Interactable>());
         }
     }
-    public WorkshopGame.SupplyItemName GetSupplyItemName()
+    public SupplyItemName GetSupplyItemName()
     {
         return m_supplyStationResourceName;
     }
-    public void SetSupplyItem(WorkshopGame.SupplyItemName supplyItemName)
+    public void SetSupplyItem(SupplyItemName supplyItemName)
     {
-        if(supplyItemName != WorkshopGame.SupplyItemName.NOTHING)
+        if(supplyItemName != SupplyItemName.NOTHING)
             ActivateAndSetSupplyItem(supplyItemName);
         else
             DeactivateAndRemoveSupplyItem();
+    }
+    public void SetMouseIsControllable(bool mouseIsControllable)
+    {
+        m_mouseIsControllable = mouseIsControllable;
     }
 }

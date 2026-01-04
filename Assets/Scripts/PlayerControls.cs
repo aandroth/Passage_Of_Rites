@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static ItemObjective;
 
 public class PlayerControls : MonoBehaviour
 {
@@ -9,6 +10,7 @@ public class PlayerControls : MonoBehaviour
     public TMPro.TextMeshPro m_nameTextMesh;
     public string m_titles;
     public int m_points;
+    public int m_totalPoints;
     public GameObject m_playerSprite;
     public Animator m_animatorBody;
     public Animator m_animatorStatusEffect;
@@ -22,6 +24,8 @@ public class PlayerControls : MonoBehaviour
     public string dataCurrent = "Player, ID, position_X, position_Y, localScale_X, animationImage";
     public List<float> m_prevTransformData;
     public int m_prevState;
+    public string m_prevTitles;
+    public int m_prevPoints;
     public int m_prevCarriedItem;
     public bool m_isMoving = false;
     public char m_nonPlayerMovement = ' ';
@@ -51,6 +55,8 @@ public class PlayerControls : MonoBehaviour
         m_prevTransformData.Add(transform.localPosition.y);
         m_prevTransformData.Add(m_playerSprite.transform.localScale.x);
         m_prevState = (int)m_state;
+        m_prevTitles = m_titles;
+        m_prevPoints = m_points;
         Debug.Log(m_state);
     }
 
@@ -90,12 +96,14 @@ public class PlayerControls : MonoBehaviour
     public void SetPlayerAsControllable()
     {
         m_playerIsControllable = true;
+        m_playerSupplyItem.SetMouseIsControllable(true);
         Debug.Log("Player is now controllable");
     }
 
     public void SetPlayerAsNotControllable()
     {
         m_playerIsControllable = false;
+        m_playerSupplyItem.SetMouseIsControllable(false);
     }
 
     public void SetPlayerAtSpawnPoint(Transform spawnPoint)
@@ -166,15 +174,18 @@ public class PlayerControls : MonoBehaviour
 
     public string GetChangedData()
     {
-        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, carriedItem";
-        //      0,  1,          2,          3,                           4,     5,           6
-        string changedData = $",{m_id},";
-        changedData += m_prevTransformData[0] != transform.localPosition.x ? $"{transform.localPosition.x}," : ",";
-        changedData += m_prevTransformData[1] != transform.localPosition.y ? $"{transform.localPosition.y}," : ",";
-        changedData += m_prevTransformData[2] != m_playerSprite.transform.localScale.x ? $"{m_playerSprite.transform.localScale.x}," : ",";
-        changedData += (int)m_state != m_prevState ? $"{(int)m_state}" : "";
+        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, carriedItem, titles, points";
+        //      0,  1,          2,          3,                           4,     5,           6,      7,      8
+        /*0,1,*/string changedData = $",{m_id},";
+        /*2,  */changedData += m_prevTransformData[0] != transform.localPosition.x ? $"{transform.localPosition.x}," : ",";
+        /*3,  */changedData += m_prevTransformData[1] != transform.localPosition.y ? $"{transform.localPosition.y}," : ",";
+        /*4,  */changedData += m_prevTransformData[2] != m_playerSprite.transform.localScale.x ? $"{m_playerSprite.transform.localScale.x}," : ",";
+        /*5,  */changedData += (int)m_state != m_prevState ? $"{(int)m_state}," : ",";
+        /*6,  */changedData += (int)m_playerSupplyItem.GetSupplyItemName() != m_prevCarriedItem ? $"{(int)m_playerSupplyItem.GetSupplyItemName()}," : ",";
+        /*7,  */changedData += m_titles != m_prevTitles ? $"{m_titles}," : ",";
+        /*8,  */changedData += m_points != m_prevPoints ? $"{m_points}" : "";
 
-        if(changedData == $",{m_id},,,,")
+        if(changedData == $",{m_id},,,,,,,")
         {
             return "Unchanged";
         }
@@ -183,31 +194,37 @@ public class PlayerControls : MonoBehaviour
 
     public void SetChangedDataToCurrentValues()
     {
-        m_prevTransformData[0] = transform.localPosition.x;
-        m_prevTransformData[1] = transform.localPosition.y;
-        m_prevTransformData[2] = m_playerSprite.transform.localScale.x;
-        m_prevState = (int)m_state;
-        m_prevCarriedItem = (int)m_accessibleSupplyItem.GetSupplyItemName();
+        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, carriedItem, titles, points";
+        //      0,  1,          2,          3,                           4,     5,           6,      7,      8
+        /*2*/m_prevTransformData[0] = transform.localPosition.x;
+        /*3*/m_prevTransformData[1] = transform.localPosition.y;
+        /*4*/m_prevTransformData[2] = m_playerSprite.transform.localScale.x;
+        /*5*/m_prevState = (int)m_state;
+        /*6*/m_prevCarriedItem = (int)m_accessibleSupplyItem.GetSupplyItemName();
+        /*7*/m_prevTitles = m_titles;
+        /*8*/m_prevPoints = m_points;
     }
 
-    public string GetChangablelData()
+    public string GetChangableData()
     {
         string changableData = $"Update,{m_id},";
         changableData += $"{transform.localPosition.x},";
         changableData += $"{transform.localPosition.y},";
         changableData += $"{m_playerSprite.transform.localScale.x},";
-        changableData += $"{(int)m_state}";
-        changableData += $"{(int)m_accessibleSupplyItem.GetSupplyItemName()}";
+        changableData += $"{(int)m_state},";
+        changableData += $"{(int)m_accessibleSupplyItem.GetSupplyItemName()},";
+        changableData += $"{m_titles},";
+        changableData += $"{m_points}";
 
-        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, carriedItem";
-        //      0,  1,          2,          3,                           4,     5,           6
+        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, carriedItem, titles, points";
+        //      0,  1,          2,          3,                           4,     5,           6,      7,      8
         return changableData;
     }
 
     public void PutChangedData(string[] changedDataList)
     {
-        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, carriedItem";
-        //      0,  1,          2,          3,                           4,     5,           6
+        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, carriedItem, titles, points";
+        //      0,  1,          2,          3,                           4,     5,           6,      7,      8
 
         Vector3 position = transform.localPosition;
         if (changedDataList[2] != "") position.x = float.Parse(changedDataList[2]);
@@ -243,19 +260,20 @@ public class PlayerControls : MonoBehaviour
 
         if (changedDataList[6] != "")
         {
-            Debug.Log(changedDataList[6]);
             int carriedItem = int.Parse(changedDataList[6]);
             if ((int)m_accessibleSupplyItem.GetSupplyItemName() != carriedItem)
             {
-                m_accessibleSupplyItem.SetSupplyItem((WorkshopGame.SupplyItemName)carriedItem);
+                m_accessibleSupplyItem.SetSupplyItem((SupplyItemName)carriedItem);
             }
         }
+        if (changedDataList[7] != "") m_titles = changedDataList[7];
+        if (changedDataList[8] != "") m_points = int.Parse(changedDataList[8]);
     }
 
     public void PutAllData(string[] allDataList)
     {
-        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, carriedItem, name, color";
-        //      0,  1,          2,          3,                           4,     5,           6,    7,     8
+        //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, carriedItem, titles, points, totalPoints, name, color";
+        //      0,  1,          2,          3,                           4,     5,           6,      7,      8,           9,   10,    11
 
         Vector3 position = transform.localPosition;
         position.x = float.Parse(allDataList[2]);
@@ -287,11 +305,15 @@ public class PlayerControls : MonoBehaviour
         int carriedItem = int.Parse(allDataList[6]);
         if ((int)m_accessibleSupplyItem.GetSupplyItemName() != carriedItem)
         {
-            m_accessibleSupplyItem.SetSupplyItem((WorkshopGame.SupplyItemName)carriedItem);
+            m_accessibleSupplyItem.SetSupplyItem((SupplyItemName)carriedItem);
         }
 
-        m_nameTextMesh.text = allDataList[7];
-        string[] color = allDataList[8].Split("|");
+        m_titles = allDataList[7];
+
+        m_points = int.Parse(allDataList[8]);
+        m_totalPoints = int.Parse(allDataList[9]);
+        m_nameTextMesh.text = allDataList[10];
+        string[] color = allDataList[11].Split("|");
         m_color = new Color(float.Parse(color[0]),
                             float.Parse(color[1]),
                             float.Parse(color[2]));
@@ -320,14 +342,9 @@ public class PlayerControls : MonoBehaviour
         m_animatorBody.speed = 1;
     }
 
-    public void AssignTrapToPlayerSupplyItem(WorkshopGame.TrapType t)
+    public void AssignNeededSuppliesToPlayerSupplyItem(List<SupplyItemName> neededSupplyItems)
     {
-        m_playerSupplyItem.AssignTrapToComplete(t);
-    }
-
-    public void Victory()
-    {
-
+        m_playerSupplyItem.AssignNeededSupplyItems(neededSupplyItems);
     }
 
     public void DestroySelf()

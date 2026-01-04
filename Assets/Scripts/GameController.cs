@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -16,6 +17,7 @@ public class GameController : MonoBehaviour
     public Backend m_backend;
     public Game m_game = null;
     [SerializeField] string m_titleSceneName = "TitleScene";
+    [SerializeField] string m_endSceneName = "EndingScene";
     [SerializeField] bool m_gameIsPlaying = false;
 
 
@@ -45,10 +47,6 @@ public class GameController : MonoBehaviour
             m_backend.SetPlayerChangedDataToCurrentValues = SetPlayerChangedDataToCurrentValues;
             m_backend.ReceivedMessageForGameController = ReceivedMessage;
             m_backend.GetIdFromGameController = () => { return m_mainPlayerId; };
-            
-            Debug.Log("Calling GameIntro");
-            m_game?.StartGameIntro();
-            Debug.Log("Called GameIntro");
         }
     }
 
@@ -82,11 +80,11 @@ public class GameController : MonoBehaviour
 
         m_isGameOwner = becameOwner;
 
-        TitleSceneController t = (TitleSceneController)GameObject.FindAnyObjectByType(typeof(TitleSceneController));
-        if (t != null)
+        TitleSceneController titleSceneController = (TitleSceneController)GameObject.FindAnyObjectByType(typeof(TitleSceneController));
+        if (titleSceneController != null)
         {
             Debug.Log($"Found TitleSceneController");
-            t.BecomeGameOwner(becameOwner);
+            titleSceneController.BecomeGameOwner(becameOwner);
         }
     }
 
@@ -106,13 +104,40 @@ public class GameController : MonoBehaviour
             if (m_game != null)
             {
                 m_backend.SignalReadinessToServer(m_mainPlayerId);
-                if (scene.name == m_titleSceneName)
-                { 
-                    if(m_mainPlayerId != -1)
-                        m_game.SendNameToTitleSceneController(m_playersDict[m_mainPlayerId].m_nameTextMesh.text);
+                if (scene.name == m_titleSceneName && m_mainPlayerId != -1)
+                {
+                    m_game.SendNameToTitleSceneController(m_playersDict[m_mainPlayerId].m_nameTextMesh.text);
+                    if(m_backend.m_connected)
+                        m_backend.RequestKillServer();
+                }
+                else if(scene.name != m_endSceneName)
+                {
+
                 }
             }
         }
+    }
+
+    private void CreatePlayerAfterWaitForLevelLoad(int id, string[] playerData)
+    {
+        StartCoroutine(CreatePlayerAfterWaitForLevelLoadCoroutine(id, playerData));
+    }
+
+    private IEnumerator CreatePlayerAfterWaitForLevelLoadCoroutine(int id, string[] playerData)
+    {
+        Debug.Log($"Creating player {id} after wait for level load");
+        float waitTime = 0.0f;
+        while (waitTime > 0)
+        {
+            Debug.Log($"waitTime: {waitTime}");
+            waitTime -= Time.deltaTime;
+            yield return null;
+        }
+        PlayerControls pc = CreateCharacter(m_mainPlayerId == id, id, playerData);
+        m_game?.AssignPlayer(pc, id, m_mainPlayerId == id);
+        if (m_mainPlayerId == id)
+            m_backend.SignalReadinessToServer(id);
+        Debug.Log($"Created player {id} after wait for level load");
     }
 
     public void DestroyPlayer()
@@ -130,7 +155,7 @@ public class GameController : MonoBehaviour
         if(isEndScene) 
             m_backend.RequestServerToLoadLevel(0);
 
-        if (m_gameIsPlaying)
+        if (m_gameIsPlaying && m_game != null)
         {
             List<Game.PlayerInfo> playerInfos = new List<Game.PlayerInfo>();
             foreach (var player in m_playersDict)
@@ -143,7 +168,15 @@ public class GameController : MonoBehaviour
                 });
             }
             m_gameIsPlaying = false;
-            m_game?.SetPlayerPoints(playerInfos);
+            if (m_playersDict.Count > 0)
+            {
+                int topPlayerIndex = m_game.SetPlayerPointsAndGetBackTopPlayer(playerInfos);
+                if (topPlayerIndex == m_mainPlayerId)
+                {
+                    //m_playersDict[m_mainPlayerId].m_titles += m_playersDict[m_mainPlayerId].m_titles.Length > 0 ? $" {m_game.GetTitle()}" : m_game.GetTitle();
+                    m_backend?.SendPlayerChangedData();
+                }
+            }
         }
         else
             m_backend?.SignalReadinessToServer(m_mainPlayerId);
@@ -175,8 +208,12 @@ public class GameController : MonoBehaviour
                     BecomeGameOwner(playerData[2] == "t" ? true : false);
                 break;
             case "Load_Level":
-                if (playerData.Length >= 2) 
-                    SceneManager.LoadScene(int.Parse(playerData[1]));
+                if (playerData.Length >= 2)
+                {
+                    int levelIndex = int.Parse(playerData[1]);
+                    if (levelIndex == 0 && m_backend != null && m_backend.m_connected) { m_backend?.CancelConnection(); }
+                    SceneManager.LoadScene(levelIndex);
+                }
                 break;
             case "Start_Intro":
                 if (playerData.Length >= 2)
@@ -195,6 +232,7 @@ public class GameController : MonoBehaviour
             case "Start_Countdown":
                 m_game?.StartGamePlaying(CallbackForGameControllerSendReadySignal);
                 m_gameIsPlaying = true;
+                m_backend.StartGettingChangedData();
                 break;
             case "Stop_Game":
                 if (!(m_game.GetGameState() == Game.GAME_STATE.GAME_OVER))
@@ -210,15 +248,14 @@ public class GameController : MonoBehaviour
                 {
                     m_backend.RequestServerToLoadLevel(m_game.GameGetNextLevelIndex());
                 }
+                m_backend.StopGettingChangedData();
                 break;
             case "New_Player":
-                PlayerControls pc = CreateCharacter(m_mainPlayerId == id, id, playerData);
-                m_game?.AssignPlayer(pc, id, m_mainPlayerId == id);
-                if (m_mainPlayerId == id)
-                    m_backend.SignalReadinessToServer(id);
+                CreatePlayerAfterWaitForLevelLoad(id, playerData);
                 break;
             case "Update":
                 UpdateCharacter(id, playerData);
+                if (id != m_mainPlayerId && playerData[8] != "") m_game?.UpdateOtherPlayerPoints(id, int.Parse(playerData[8]));
                 break;
         }
     }

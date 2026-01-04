@@ -2,14 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static WorkshopGame;
+using static ItemObjective;
 
 public class WorkshopSupplyStation : Interactable
 {
     public const float M_TIME_TILL_USABLE_AGAIN = 5f;
     public float m_timeTillUsableCountdown = 0, m_animatorSpeedSafetyMargin = 0.1f;
     public bool m_isUsable = true, m_supplyNeededByPlayer = false;
-    public WorkshopGame.SupplyItemName m_supplyStationResourceName = WorkshopGame.SupplyItemName.METAL;
+    public SupplyItemName m_supplyStationResourceName = SupplyItemName.METAL;
     public SpriteRenderer m_supplyImageRenderer, m_frameSpriteRenderer;
     public Sprite m_supplyFrameHighlightSprite, m_supplyFrameDefaultSprite;
     public Animator m_supplyFrameAnimator;
@@ -19,7 +19,6 @@ public class WorkshopSupplyStation : Interactable
     public float m_minPlayerDistanceToCenter = 2f;
 
     public WorkshopSupplyStationCircleCollider m_supplyStationCircleCollider;
-    public bool m_playerInRange = false;
 
     private bool m_playerMouseInRange = false;
     private PlayerSupplyItem m_playerSupplyItemInRange;
@@ -39,7 +38,9 @@ public class WorkshopSupplyStation : Interactable
     {
         if (m_isUsable && suppliesNeeded.Contains(m_supplyStationResourceName))
         {
-            SupplyTaken();
+            m_isUsable = false;
+            UnhighlightSupplyIfHighlighted();
+            StartCoroutine(SupplyTakenCoroutine());
             return m_supplyStationResourceName;
         }
         else
@@ -55,18 +56,7 @@ public class WorkshopSupplyStation : Interactable
         return m_centerPoint.transform.position;
     }
 
-    public void SetSupply(WorkshopGame.SupplyItemName supplyName, Sprite supplySprite)
-    {
-        m_supplyStationResourceName = supplyName;
-        m_supplyImageRenderer.sprite = supplySprite;
-    }
 
-    public void SupplyTaken()
-    {
-        m_isUsable = false;
-        UnhighlightSupplyIfHighlighted();
-        StartCoroutine(SupplyTakenCoroutine());
-    }
     public IEnumerator SupplyTakenCoroutine()
     {
         m_timeTillUsableCountdown = M_TIME_TILL_USABLE_AGAIN;
@@ -85,7 +75,7 @@ public class WorkshopSupplyStation : Interactable
         if (m_playerInRange)
             HighlightSupplyIfNeeded();
     }
-    public bool SupplyNeededByPlayer(List<WorkshopGame.SupplyItemName> supplyNames)
+    public bool SupplyNeededByPlayer(List<SupplyItemName> supplyNames)
     {
         return supplyNames.Contains(m_supplyStationResourceName);
     }

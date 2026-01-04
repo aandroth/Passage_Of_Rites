@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
-using static WorkshopGame;
+using static ItemObjective;
 
 public class OtherPlayerSupplyItem : Interactable, IAccessibleSupplyItem
 {
     public bool m_isUsable = true, m_supplyNeededByPlayer = false;
-    public WorkshopGame.SupplyItemName m_supplyStationResourceName = WorkshopGame.SupplyItemName.NOTHING;
+    public SupplyItemName m_supplyStationResourceName = SupplyItemName.NOTHING;
     public SpriteRenderer m_supplyCarriedSpriteRenderer;
     public GameObject m_frameSpriteRenderer;
     public Transform m_centerPoint;
@@ -18,7 +18,6 @@ public class OtherPlayerSupplyItem : Interactable, IAccessibleSupplyItem
 
 
     public WorkshopSupplyStationCircleCollider m_otherPlayerSupplyCircleCollider;
-    public bool m_playerInRange = false;
 
     private bool m_playerMouseInRange = false;
     private PlayerSupplyItem m_playerSupplyItemInRange;
@@ -95,7 +94,7 @@ public class OtherPlayerSupplyItem : Interactable, IAccessibleSupplyItem
             supplyHeld == SupplyItemName.NOTHING);
     }
 
-    public WorkshopGame.SupplyItemName SupplyStolen()
+    public SupplyItemName SupplyStolen()
     {
         var supplyName = m_supplyStationResourceName;
         UnhighlightSupplyIfHighlighted();
@@ -107,7 +106,7 @@ public class OtherPlayerSupplyItem : Interactable, IAccessibleSupplyItem
     public void ActivateAndSetSupplyItem(SupplyItemName supplyName)
     {
         m_supplyCarriedSpriteRenderer.gameObject.SetActive(true);
-        m_supplyCarriedSpriteRenderer.sprite = m_nameToSpriteDict[supplyName];
+        m_supplyCarriedSpriteRenderer.sprite = ItemObjective.SpriteOfSupplyItem(supplyName);
         m_supplyStationResourceName = supplyName;
         m_frameSpriteRenderer.SetActive(true);
     }
@@ -119,13 +118,13 @@ public class OtherPlayerSupplyItem : Interactable, IAccessibleSupplyItem
         m_supplyCarriedSpriteRenderer.gameObject.SetActive(false);
         m_frameSpriteRenderer.SetActive(false);
     }
-    public WorkshopGame.SupplyItemName GetSupplyItemName()
+    public SupplyItemName GetSupplyItemName()
     {
         return m_supplyStationResourceName;
     }
-    public void SetSupplyItem(WorkshopGame.SupplyItemName supplyItemName)
+    public void SetSupplyItem(SupplyItemName supplyItemName)
     {
-        if (supplyItemName != WorkshopGame.SupplyItemName.NOTHING)
+        if (supplyItemName != SupplyItemName.NOTHING)
             ActivateAndSetSupplyItem(supplyItemName);
         else
             DeactivateAndRemoveSupplyItem();

@@ -51,6 +51,15 @@ public class TitleSceneController : Game
         Debug.Log($"Disconnect called");
         m_backend?.CancelConnection();
     }
+    public void CallBackendForServerKill()
+    {
+        Debug.Log($"Kill called");
+        m_backend?.RequestKillServer();
+        if(!m_buttonStartConnection.activeSelf) m_buttonStartConnection.SetActive(true);
+        if(m_buttonStopConnection.activeSelf) m_buttonStopConnection.SetActive(false);
+        if(m_startGameButton.gameObject.activeSelf) m_startGameButton.gameObject.SetActive(false);
+        CallBackendForServerOptions();
+    }
 
     public void CallBackendForServerOptions()
     {
@@ -80,11 +89,13 @@ public class TitleSceneController : Game
 
     public void ParseServerList(string[] serverListResult)
     {
+        DestroyButtonsInIpAddressPanel();
         if (serverListResult.Length == 0)
+        {
             WriteTextInIpAddressText("No active servers found.");
+        }
         else
         {
-            DestroyButtonsInIpAddressPanel();
             CreateButtonsInIpAddressPanel(serverListResult);
         }
     }
@@ -100,13 +111,17 @@ public class TitleSceneController : Game
         {
             GameObject newButton = Instantiate(m_buttonPrefab, m_buttonParent.transform);
             newButton.GetComponent<IpButton>().AssignButtonParameters(servers[i], m_ipAddressText, m_backend.SetServerUrl);
+            m_ipButtonsList.Add(newButton);
         }
     }
 
     public void DestroyButtonsInIpAddressPanel()
     {
-        foreach (var item in m_ipButtonsList)
-            Destroy(item);
+        for (int i = 0; i < m_ipButtonsList.Count; ++i)
+        {
+            Destroy(m_ipButtonsList[i]);
+            m_ipButtonsList.RemoveAt(i);
+        }
     }
 
     public void BecomeGameOwner(bool becameOwner = true)

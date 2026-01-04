@@ -1,29 +1,12 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
-using static ItemObjective_Trap;
 
-public class WorkshopGame : Game
+public class RatCatchGame : Game
 {
-    public delegate void SetPlayerLocation();
-    public List<GameObject> m_supplyStationObjects;
-    public GameObject m_announcementTextPanel;
-    public List<GameObject> m_winnerTextPanels;
-    public List<TMP_Text> m_winnerTexts;
-    public int m_playerStationIdx = 0;
-
-    [SerializeField] ItemObjective_Trap m_playerStation_ItemObjectiveTrap;
-    public List<Transform> m_playerSpawnLocations;
-    public static List<Transform> m_playerTableLocations;
-    [SerializeField] public List<TMP_Text> m_playerNameTexts;
-    [SerializeField] public List<TMP_Text> m_playerScoreTexts;
 
     [SerializeField] private TMP_Text m_mainPlayerScoreText;
-
     [SerializeField] private float m_gameInitDelay = 0;
     [SerializeField] private float m_holdOnWinnersDelay = 0;
     [SerializeField] private MinigameTitleCard m_gameTitleCard;
@@ -32,21 +15,25 @@ public class WorkshopGame : Game
     [SerializeField] private ThreeTwoOneGo_Countdown m_threeTwoOneGoCountdown;
 
 
-    public List<Sprite> m_trapSprites = new List<Sprite>();
-    public List<Sprite> m_supplySprites = new List<Sprite>();
+    public int m_mainPlayerStationIdx = 0;
+    public ItemObjective_Reuse m_mainPlayerRatCage;
+    public List<Transform> m_playerSpawnLocations;
+    public static List<Transform> m_otherPlayerRatCageLocations;
+    [SerializeField] public List<TMP_Text> m_playerNameTexts;
+    [SerializeField] public List<TMP_Text> m_playerScoreTexts;
+
     private IEnumerator m_countdownCoroutine;
 
     private PlayerControls m_playerControls;
     [SerializeField] private float m_endGameHornHoldTime;
     [SerializeField] private float m_endGameScoresHoldTime;
-    [SerializeField] private int m_pointsPerCompletedTrap = 10;
+
+    public GameObject m_announcementTextPanel;
+    public List<GameObject> m_winnerTextPanels;
+    public List<TMP_Text> m_winnerTexts;
 
 
-    private void Start()
-    {
-        m_playerStation_ItemObjectiveTrap.m_reportTrapCompleted = TrapCompleted;
-        m_playerStation_ItemObjectiveTrap.m_requestAssignNewTrap = AssignTrapToPlayerAndStation;
-    }
+    [SerializeField] Camera_FollowPlayer m_mainPlayerCameraFollow;
 
     public override void StartGamePlaying(SignalReadinessDelegate signalGameControllerReady = null)
     {
@@ -70,7 +57,7 @@ public class WorkshopGame : Game
         }
         m_gameTitleCard.OutroAnimation();
 
-        float timeCardDelayTime = m_gameInitDelay*2f;
+        float timeCardDelayTime = m_gameInitDelay * 2f;
 
         while (timeCardDelayTime > 0)
         {
@@ -95,7 +82,7 @@ public class WorkshopGame : Game
             yield return null;
         }
 
-        signalGameControllerReady();
+        if(signalGameControllerReady != null) signalGameControllerReady();
     }
     public override void StartGameOutro(SignalReadinessDelegate func = null)
     {
@@ -147,22 +134,22 @@ public class WorkshopGame : Game
         }
 
         bool isTie = false;
-        if(playerInfoList.Count > 2 && 
-           playerInfoList[0].points == playerInfoList[1].points && 
-           playerInfoList[0].points > 0) 
+        if (playerInfoList.Count > 2 &&
+           playerInfoList[0].points == playerInfoList[1].points &&
+           playerInfoList[0].points > 0)
             isTie = true;
 
         m_announcementTextPanel.GetComponentInChildren<TMP_Text>().text =
             (isTie) ? "It's a Tie!" : "The Winner is\n\r";
 
-        if(!isTie && playerInfoList[0].points > 0)
+        if (!isTie && playerInfoList[0].points > 0)
         {
             m_playerControls.m_titles += m_playerControls.m_titles.Length > 0 ? $" {m_gameTitle}" : m_gameTitle;
             m_announcementTextPanel.GetComponentInChildren<TMP_Text>().text += $"{playerInfoList[0].name}\n\rthe {m_playerControls.m_titles}!";
-            if(m_playerControls.m_id == topPlayerIndex) 
+            if (m_playerControls.m_id == topPlayerIndex)
                 m_playerControls.m_titles += m_playerControls.m_titles.Length > 0 ? $" {m_gameTitle}" : m_gameTitle;
         }
-        else if(playerInfoList[0].points <= 0)
+        else if (playerInfoList[0].points <= 0)
         {
             m_announcementTextPanel.GetComponentInChildren<TMP_Text>().text += $"...nobody...";
         }
@@ -171,13 +158,12 @@ public class WorkshopGame : Game
 
     public override void AssignPlayer(PlayerControls playerControls, int id, bool isMainPlayer = false)
     {
-        if (isMainPlayer) m_playerStationIdx = id;
         playerControls.SetPlayerAtSpawnPoint(m_playerSpawnLocations[id]);
         if (isMainPlayer)
         {
+            m_mainPlayerCameraFollow.SetTarget(playerControls.transform);
             m_playerControls = playerControls;
-            m_playerStationIdx = id;
-            AssignTrapToPlayerAndStation();
+            m_mainPlayerStationIdx = id;
         }
         else
         {
@@ -189,13 +175,13 @@ public class WorkshopGame : Game
 
     private IEnumerator Countdown(SignalReadinessDelegate signalGameControllerReady = null)
     {
-        Debug.Log("Workshop Countdown started");
+        Debug.Log("Rat-Catch Countdown started");
         float timeForGame = m_gameCountdownTime;
         int prevTime = Mathf.FloorToInt(m_gameCountdownTime);
         while (timeForGame > 0)
         {
             timeForGame -= Time.deltaTime;
-            if(prevTime != Mathf.FloorToInt(timeForGame))
+            if (prevTime != Mathf.FloorToInt(timeForGame))
             {
                 prevTime = Mathf.FloorToInt(timeForGame);
                 prevTime = Mathf.Max(0, prevTime);
@@ -234,29 +220,16 @@ public class WorkshopGame : Game
         signalGameControllerReady?.Invoke(); // Signals GameController that the scene has finished, and the next can be loaded
     }
 
-    //public static Vector3 GetSpawnLocationForId(int id)
-    //{
-    //    //if(id < 0 || id > m_playerSpawnLocations.Count)
-    //        return Vector3.zero;
 
-    //    //return m_playerSpawnLocations[id].position;
-    //}
-
-    public void TrapCompleted()
+    public void AssignRatsToPlayerAndStation()
     {
-        UpdateMainPlayerPoints();
-    }
-
-    public void AssignTrapToPlayerAndStation()
-    {
-        TrapType t = m_playerStation_ItemObjectiveTrap.AssignTrapToComplete();
-        m_playerControls.AssignNeededSuppliesToPlayerSupplyItem(ItemObjective_Trap.m_trapTypeToSupplyItemDict[t].ToList());
-
+        //m_playerControls.AssignTrapToPlayerSupplyItem(t);
+        //m_mainPlayerRatCage.AssignTrapToComplete(t);
     }
 
     public void UpdateMainPlayerPoints()
     {
-        m_playerControls.m_points += m_pointsPerCompletedTrap;
+        //m_playerControls.m_points += m_pointsPerCompletedTrap;
         m_mainPlayerScoreText.text = $"{m_playerControls.m_points} Points";
     }
 

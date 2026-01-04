@@ -111,6 +111,10 @@ public class Backend : MonoBehaviour
     {
         m_gameInProgress = true;
     }
+    public void StopGettingChangedData()
+    {
+        m_gameInProgress = false;
+    }
 
     public void RequestNewServer(Action<string> callbackFn)
     {
@@ -155,7 +159,6 @@ public class Backend : MonoBehaviour
 
     public IEnumerator RequestListOfServersCoroutine(Action<string[]> callbackFn)
     {
-
         if (m_serverUrl == "localhost")
         {
             Debug.Log($"Requesting all existing servers at localhost");
@@ -170,7 +173,6 @@ public class Backend : MonoBehaviour
                 Debug.Log($"Request made");
                 yield return serverRequest.SendWebRequest();
                 string errorString = "There was an error? Of course there was an error. Why couldn't it just work!?\n- you, probably";
-                string serverResultString = "";
                 switch (serverRequest.result)
                 {
                     case UnityWebRequest.Result.ConnectionError: 
@@ -178,7 +180,6 @@ public class Backend : MonoBehaviour
                     case UnityWebRequest.Result.ProtocolError:
                         Debug.Log(errorString);
                         Debug.Log(serverRequest.result);
-                        serverResultString = "Bad Result";
                         break;
                     case UnityWebRequest.Result.Success:
                         var data = JsonUtility.FromJson<JsonClassList>(serverRequest.downloadHandler.text);
@@ -265,13 +266,22 @@ public class Backend : MonoBehaviour
 
     public IEnumerator RequestKillServerCoroutine()
     {
+        if (this == Instance && m_connected)
+        {
+            string startGameRequest = $"Kill_Game,";
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(startGameRequest);
+            m_webSocket.Send(bytes);
+            Debug.Log($"Request finished");
+        }
+
+
         Debug.Log($"Requesting kill server at {m_apiGatewayUrl}/KillGame");
         using (UnityWebRequest serverRequest = UnityWebRequest.Get(m_apiGatewayUrl + "/KillGame"))
         {
             Debug.Log($"Request made");
             yield return serverRequest.SendWebRequest();
             string errorString = "There was an error? Of course there was an error. Why couldn't it just work!?\n- you, probably";
-            string serverResultString = "";
             switch (serverRequest.result)
             {
                 case UnityWebRequest.Result.ConnectionError:
@@ -279,7 +289,6 @@ public class Backend : MonoBehaviour
                 case UnityWebRequest.Result.ProtocolError:
                     Debug.Log(errorString);
                     Debug.Log(serverRequest.result);
-                    serverResultString = "Bad Result";
                     break;
                 case UnityWebRequest.Result.Success:
                     Debug.Log($"RequestListOfServers SUCCESS: {(m_serverUrl)}");
@@ -295,21 +304,21 @@ public class Backend : MonoBehaviour
         if(m_connected)
             m_webSocket.DispatchMessageQueue();
 #endif
-        if (Input.GetKeyUp(KeyCode.I))
-        {
-            Debug.Log("Calling API Gateway");
-            StartCoroutine(RequestNewServerCoroutine((str) => { Debug.Log($"API called from keystroke with result: {str}"); }));
-        }
-        if (Input.GetKeyUp(KeyCode.O))
-        {
-            Debug.Log("Calling connection");
-            StartWebSocketConnection();
-        }
-        if (Input.GetKeyUp(KeyCode.P))
-        {
-            Debug.Log("Cancelling connection");
-            CancelConnection();
-        }
+        //if (Input.GetKeyUp(KeyCode.I))
+        //{
+        //    Debug.Log("Calling API Gateway");
+        //    StartCoroutine(RequestNewServerCoroutine((str) => { Debug.Log($"API called from keystroke with result: {str}"); }));
+        //}
+        //if (Input.GetKeyUp(KeyCode.O))
+        //{
+        //    Debug.Log("Calling connection");
+        //    StartWebSocketConnection();
+        //}
+        //if (Input.GetKeyUp(KeyCode.P))
+        //{
+        //    Debug.Log("Cancelling connection");
+        //    CancelConnection();
+        //}
 
         if (m_connected && GetPlayerData != null && m_gameInProgress)
         {
@@ -317,16 +326,21 @@ public class Backend : MonoBehaviour
             if (intervalTimeCurr >= intervalTime)
             {
                 intervalTimeCurr = 0;
-                string changes = GetPlayerData();
-                if (changes != "Unchanged")
-                {
-                    changes = $"Update{changes}";
-                    Debug.Log($"Sending: {changes}");
-                    var bytes = System.Text.Encoding.UTF8.GetBytes(changes);
-                    m_webSocket.Send(bytes);
-                    SetPlayerChangedDataToCurrentValues();
-                }
+                SendPlayerChangedData();
             }
+        }
+    }
+
+    public void SendPlayerChangedData()
+    {
+        string changes = GetPlayerData();
+        if (changes != "Unchanged")
+        {
+            changes = $"Update{changes}";
+            Debug.Log($"Sending: {changes}");
+            var bytes = System.Text.Encoding.UTF8.GetBytes(changes);
+            m_webSocket.Send(bytes);
+            SetPlayerChangedDataToCurrentValues();
         }
     }
 

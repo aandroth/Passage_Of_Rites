@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
-using static WorkshopGame;
+using static ItemObjective;
+using static ItemObjective_Trap;
 
 public class PlayerStation : Interactable
 {
-    public bool m_playerInRange = false;
     public List<SupplyItemName> m_neededSupplyItems;
     public int m_suppliesGatheredCount = 0;
     public List<SpriteRenderer> m_suppliesNeededIcons;
@@ -20,59 +20,62 @@ public class PlayerStation : Interactable
 
     public delegate void ReportTrapCompleted(TrapType t);
     public ReportTrapCompleted m_reportTrapCompleted;
+    public delegate void RequestAssignNewTrap();
+    public RequestAssignNewTrap m_requestAssignNewTrap;
     public delegate void ReportSupplyCheckedOff();
     public ReportTrapCompleted m_reportSupplyCheckedOff;
 
     private void Start()
     {
-        m_isSupplier = false;
+        //m_isSupplier = false;
     }
 
-    public void AssignTrapToComplete(TrapType trapType)
-    {
-        m_trapType = trapType;
-        m_neededSupplyItems.Clear();
-        foreach (var item in m_trapToSuppliesDict[trapType])
-        {
-            m_neededSupplyItems.Add(item);
-        }
-        for (int i = 0; i < m_suppliesNeededIcons.Count; i++)
-        {
-            m_suppliesNeededIcons[i].sprite = WorkshopGame.m_nameToSpriteDict[m_neededSupplyItems[i]];
-        }
-        m_finishedTrapSpriteRenderer.sprite = m_trapToSpriteDict[trapType];
-        m_finishedTrapNameTMP.text = m_trapToNameDict[trapType];
-    }
+    //public void AssignTrapToComplete(TrapType trapType)
+    //{
+    //    m_trapType = trapType;
+    //    m_neededSupplyItems.Clear();
+    //    foreach (var item in WorkshopGame.m_trapToSuppliesDict[trapType])
+    //    {
+    //        m_neededSupplyItems.Add(item);
+    //    }
+    //    for (int i = 0; i < m_suppliesNeededIcons.Count; i++)
+    //    {
+    //        m_suppliesNeededIcons[i].sprite = WorkshopGame.m_nameToSpriteDict[m_neededSupplyItems[i]];
+    //    }
+    //    m_finishedTrapSpriteRenderer.sprite = WorkshopGame.m_trapToSpriteDict[trapType];
+    //    m_finishedTrapNameTMP.text = WorkshopGame.m_trapToNameDict[trapType];
+    //}
 
-    public override SupplyItemName Interact(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
-    {
-        CheckOffSupply(supplyHeld);
-        if (m_suppliesGatheredCount == m_suppliesNeededIcons.Count)
-        {
-            StartCoroutine(CompleteTrapCoroutine());
-        }
-        return SupplyItemName.NOTHING;
-    }
-    public override bool PlayerCanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
-    {
-        return supplyHeld != SupplyItemName.NOTHING && m_neededSupplyItems.Contains(supplyHeld);
-    }
+    //public override SupplyItemName Interact(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
+    //{
+    //    CheckOffSupply(supplyHeld);
+    //    if (m_suppliesGatheredCount == m_suppliesNeededIcons.Count)
+    //    {
+    //        StartCoroutine(CompleteTrapCoroutine());
+    //    }
+    //    return SupplyItemName.NOTHING;
+    //}
+    //public override bool PlayerCanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
+    //{
+    //    return supplyHeld != SupplyItemName.NOTHING && m_neededSupplyItems.Contains(supplyHeld);
+    //}
 
-    public override Vector3 GetCenterPoint()
-    {
-        return gameObject.transform.position;
-    }
+    //public override Vector3 GetCenterPoint()
+    //{
+    //    return gameObject.transform.position;
+    //}
 
-    public void CheckOffSupply(SupplyItemName supplyFromPlayer)
-    {
-        ++m_suppliesGatheredCount;
-        int index = m_neededSupplyItems.IndexOf(supplyFromPlayer);
-        m_suppliesNeededIcons[index].sprite = m_checkmarkSprite;
-        m_neededSupplyItems[index] = SupplyItemName.NOTHING;
-    }
+    //public void CheckOffSupply(SupplyItemName supplyFromPlayer)
+    //{
+    //    ++m_suppliesGatheredCount;
+    //    int index = m_neededSupplyItems.IndexOf(supplyFromPlayer);
+    //    m_suppliesNeededIcons[index].sprite = m_checkmarkSprite;
+    //    m_neededSupplyItems[index] = SupplyItemName.NOTHING;
+    //}
 
     public IEnumerator CompleteTrapCoroutine()
     {
+        m_reportTrapCompleted(m_trapType);
         m_finishedTrapObject.SetActive(true);
         float timeToShowCompletedTrapCountdown = m_showCompletedTrapTime;
         while(timeToShowCompletedTrapCountdown > 0)
@@ -84,7 +87,7 @@ public class PlayerStation : Interactable
         m_finishedTrapObject.SetActive(false);
         m_suppliesGatheredCount = 0;
 
-        m_reportTrapCompleted(m_trapType);
+        m_requestAssignNewTrap();
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -94,5 +97,20 @@ public class PlayerStation : Interactable
     private void OnTriggerExit2D(Collider2D collision)
     {
         m_playerInRange = false;
+    }
+
+    public override ItemObjective.SupplyItemName Interact(ItemObjective.SupplyItemName supplyHeld, List<ItemObjective.SupplyItemName> suppliesNeeded = null)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public override bool PlayerCanInteract(ItemObjective.SupplyItemName supplyHeld = ItemObjective.SupplyItemName.NOTHING, List<ItemObjective.SupplyItemName> suppliesNeeded = null)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public override Vector3 GetCenterPoint()
+    {
+        throw new System.NotImplementedException();
     }
 }

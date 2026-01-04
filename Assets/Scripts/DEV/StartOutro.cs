@@ -43,7 +43,7 @@ public class StartOutro : MonoBehaviour
                         m_playerInfos.Add(playerInfo);
                     }
 
-                    m_game.SetPlayerPoints(m_playerInfos);
+                    m_game.SetPlayerPointsAndGetBackTopPlayer(m_playerInfos);
                     m_game.StartGameOutro();
                 }
             }

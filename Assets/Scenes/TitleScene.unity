@@ -1152,7 +1152,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1376700245}
         m_TargetAssemblyTypeName: TitleSceneController, Assembly-CSharp
-        m_MethodName: CallBackendForServerDisconnect
+        m_MethodName: CallBackendForServerKill
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -3083,6 +3083,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_nextLevelIndex: 2
   m_gameCountdownTime: 120
+  m_gameTitle: 
   m_ipAddressText: {fileID: 2099376629}
   m_backend: {fileID: 0}
   m_buttonPrefab: {fileID: 2173401727691387973, guid: 7b7345e611d04fa4388e6d6261dca2f3, type: 3}
@@ -3281,6 +3282,7 @@ MonoBehaviour:
   m_backend: {fileID: 1902285032}
   m_game: {fileID: 0}
   m_titleSceneName: TitleScene
+  m_endSceneName: EndingScene
   m_gameIsPlaying: 0
 --- !u!4 &1543996624
 Transform:

@@ -5,10 +5,8 @@ using UnityEngine;
 public class MinigameTitleCard : MonoBehaviour
 {
     [SerializeField] private float m_moveLeftTime = 1f;
-    [SerializeField] private float m_moveLeftSpeed = 1f;
     [SerializeField] private float m_moveLeftTarget = -100f;
     [SerializeField] private float m_moveRightTime = 2f;
-    [SerializeField] private float m_moveRightSpeed = 5f;
     [SerializeField] private float m_moveRightTarget = 1000f;
 
     public void OutroAnimation()
