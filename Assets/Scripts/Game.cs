@@ -18,6 +18,8 @@ public abstract class Game : MonoBehaviour
     public delegate void UpdatMainPlayerPoints(int idx);
     public UpdatMainPlayerPoints m_updateMainPlayerPoints;
 
+    //[SerializeField] List<>
+
     public struct PlayerInfo 
     {
         public int index;

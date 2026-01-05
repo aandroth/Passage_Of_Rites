@@ -234,14 +234,6 @@ public class WorkshopGame : Game
         signalGameControllerReady?.Invoke(); // Signals GameController that the scene has finished, and the next can be loaded
     }
 
-    //public static Vector3 GetSpawnLocationForId(int id)
-    //{
-    //    //if(id < 0 || id > m_playerSpawnLocations.Count)
-    //        return Vector3.zero;
-
-    //    //return m_playerSpawnLocations[id].position;
-    //}
-
     public void TrapCompleted()
     {
         UpdateMainPlayerPoints();

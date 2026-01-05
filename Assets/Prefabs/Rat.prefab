@@ -42,6 +42,7 @@ GameObject:
   - component: {fileID: 6454822022507140311}
   - component: {fileID: 8151283673297584036}
   - component: {fileID: 2532988999630754396}
+  - component: {fileID: 2235472894921342437}
   - component: {fileID: 8398922025531561732}
   - component: {fileID: 8254470731507307924}
   m_Layer: 0
@@ -111,6 +112,33 @@ MonoBehaviour:
   m_waitTimeMax: 3
   m_facingDirection: 1
   m_speed: 2
+  m_wanderDirection: {x: 0, y: 0}
+  m_runAnimationName: Run
+  m_idleAnimationName: Idle
+  m_animator: {fileID: 2235472894921342437}
+  m_state: 0
+--- !u!95 &2235472894921342437
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1509952577828771444}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 574b70d89fe1f584f8223f20d4c124f7, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!58 &8398922025531561732
 CircleCollider2D:
   m_ObjectHideFlags: 0

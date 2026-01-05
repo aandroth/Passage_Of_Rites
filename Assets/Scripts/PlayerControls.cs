@@ -15,9 +15,7 @@ public class PlayerControls : MonoBehaviour
     public Animator m_animatorBody;
     public Animator m_animatorStatusEffect;
     public string m_walkCycleName;
-    public string m_walkCycleEyesName;
     public string m_idleCycleName;
-    public string m_idleCycleEyesName;
     public Vector2 m_position;
     public Color m_color;
     public float m_speed;

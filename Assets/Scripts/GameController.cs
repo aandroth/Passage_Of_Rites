@@ -10,6 +10,8 @@ public class GameController : MonoBehaviour
 {
     public float m_pullChangedDataInterval;
     public Dictionary<int, PlayerControls> m_playersDict = new Dictionary<int, PlayerControls>();
+    public Dictionary<int, NetworkDataObject_Npc> m_npcsDict = new Dictionary<int, NetworkDataObject_Npc>();
+    public Dictionary<int, PlayerControls> m_itemsDict = new Dictionary<int, PlayerControls>();
     public GameObject m_playerPrefab;
     public int m_mainPlayerId = -1;
     public bool m_isGameOwner;
@@ -51,6 +53,18 @@ public class GameController : MonoBehaviour
     }
 
     public void UpdateCharacter(int id, string[] playerData)
+    {
+        if (m_playersDict.ContainsKey(id))
+            m_playersDict[int.Parse(playerData[1])].PutChangedData(playerData);
+    }
+
+    public void UpdateNpc(int id, string[] npcData)
+    {
+        if (m_playersDict.ContainsKey(id))
+            m_npcsDict[int.Parse(npcData[1])].PutChangedData(npcData);
+    }
+
+    public void UpdateItem(int id, string[] playerData)
     {
         if (m_playersDict.ContainsKey(id))
             m_playersDict[int.Parse(playerData[1])].PutChangedData(playerData);
@@ -116,28 +130,6 @@ public class GameController : MonoBehaviour
                 }
             }
         }
-    }
-
-    private void CreatePlayerAfterWaitForLevelLoad(int id, string[] playerData)
-    {
-        StartCoroutine(CreatePlayerAfterWaitForLevelLoadCoroutine(id, playerData));
-    }
-
-    private IEnumerator CreatePlayerAfterWaitForLevelLoadCoroutine(int id, string[] playerData)
-    {
-        Debug.Log($"Creating player {id} after wait for level load");
-        float waitTime = 0.0f;
-        while (waitTime > 0)
-        {
-            Debug.Log($"waitTime: {waitTime}");
-            waitTime -= Time.deltaTime;
-            yield return null;
-        }
-        PlayerControls pc = CreateCharacter(m_mainPlayerId == id, id, playerData);
-        m_game?.AssignPlayer(pc, id, m_mainPlayerId == id);
-        if (m_mainPlayerId == id)
-            m_backend.SignalReadinessToServer(id);
-        Debug.Log($"Created player {id} after wait for level load");
     }
 
     public void DestroyPlayer()
@@ -251,9 +243,20 @@ public class GameController : MonoBehaviour
                 m_backend.StopGettingChangedData();
                 break;
             case "New_Player":
-                CreatePlayerAfterWaitForLevelLoad(id, playerData);
+                PlayerControls pc = CreateCharacter(m_mainPlayerId == id, id, playerData);
+                m_game?.AssignPlayer(pc, id, m_mainPlayerId == id);
+                if (m_mainPlayerId == id)
+                    m_backend.SignalReadinessToServer(id);
                 break;
-            case "Update":
+            case "Update_Player":
+                UpdateCharacter(id, playerData);
+                if (id != m_mainPlayerId && playerData[8] != "") m_game?.UpdateOtherPlayerPoints(id, int.Parse(playerData[8]));
+                break;
+            case "Update_Npc":
+                UpdateCharacter(id, playerData);
+                if (id != m_mainPlayerId && playerData[8] != "") m_game?.UpdateOtherPlayerPoints(id, int.Parse(playerData[8]));
+                break;
+            case "Update_Item":
                 UpdateCharacter(id, playerData);
                 if (id != m_mainPlayerId && playerData[8] != "") m_game?.UpdateOtherPlayerPoints(id, int.Parse(playerData[8]));
                 break;

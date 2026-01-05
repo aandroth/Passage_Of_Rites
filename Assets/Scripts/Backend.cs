@@ -421,7 +421,9 @@ public class Backend : MonoBehaviour
             case "Start_Outro":
             case "New_Player":
             case "Ready_For_Next_Level":
-            case "Update":
+            case "Update_Player":
+            case "Update_Npc":
+            case "Update_Item":
                 SendServerDataToGameController(data, action, playerData);
                 break;
             default:
