@@ -6,6 +6,10 @@ public class NetworkDataObject_Item : MonoBehaviour
     {
         throw new System.NotImplementedException();
     }
+    public string GetAllData()
+    {
+        throw new System.NotImplementedException();
+    }
 
     public void PutChangedData(string[] changedDataList)
     {

@@ -4,9 +4,9 @@ using System.Collections;
 
 public class DEV_StartGame : MonoBehaviour
 {
-    [SerializeField] Backend m_backend = null;
     [SerializeField] GameController m_gameController = null;
-    [SerializeField] Game m_game = null;
+    //[SerializeField] Backend m_backend = null;
+    //[SerializeField] Game m_game = null;
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created

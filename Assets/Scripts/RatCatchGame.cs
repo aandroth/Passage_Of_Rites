@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -5,6 +6,7 @@ using UnityEngine;
 
 public class RatCatchGame : Game
 {
+    [SerializeField] public bool m_skipIntro = false;
 
     [SerializeField] private TMP_Text m_mainPlayerScoreText;
     [SerializeField] private float m_gameInitDelay = 0;
@@ -32,8 +34,28 @@ public class RatCatchGame : Game
     public List<GameObject> m_winnerTextPanels;
     public List<TMP_Text> m_winnerTexts;
 
-
     [SerializeField] Camera_FollowPlayer m_mainPlayerCameraFollow;
+    private void OnEnable()
+    {
+        for (int i = 0; i < 15; i++)
+        {
+
+            m_npcSpawners[0].SpawnNpc();
+        }
+    }
+
+
+
+    public override void SetSpawnerRequestDelegates(RequestServerSpawnNpcDelegate Spawn, Action<int> Despawn, Func<bool> IsOwner)
+    {
+        // Set the spawner to request the server to create the npc through the RatCatchGame
+        foreach (var npcSpawner in m_npcSpawners)
+        {
+            npcSpawner.m_requestServerSpawn = (NetworkDataObject_Npc n) => Spawn(n);
+            npcSpawner.m_requestServerDespawn = (int i) => Despawn(i);
+            npcSpawner.m_isServerOwner = () => { return IsOwner(); };
+        }
+    }
 
     public override void StartGamePlaying(SignalReadinessDelegate signalGameControllerReady = null)
     {
@@ -48,41 +70,49 @@ public class RatCatchGame : Game
     }
     public IEnumerator GameIntro(SignalReadinessDelegate signalGameControllerReady = null)
     {
-        float initDelayTime = m_gameInitDelay;
-
-        while (initDelayTime > 0)
+        if (!m_skipIntro)
         {
-            initDelayTime -= Time.deltaTime;
-            yield return null;
+            float initDelayTime = m_gameInitDelay;
+
+            while (initDelayTime > 0)
+            {
+                initDelayTime -= Time.deltaTime;
+                yield return null;
+            }
+            m_gameTitleCard.OutroAnimation();
+
+            float timeCardDelayTime = m_gameInitDelay * 2f;
+
+            while (timeCardDelayTime > 0)
+            {
+                timeCardDelayTime -= Time.deltaTime;
+                yield return null;
+            }
+            m_blackoutCard.StartFadeOut();
+
+            float countdownDelayTime = m_gameInitDelay * 2f;
+
+            while (timeCardDelayTime > 0)
+            {
+                timeCardDelayTime -= Time.deltaTime;
+                yield return null;
+            }
+
+            float threeTwoOneGoDelayTime = 10f + 1f;
+            m_threeTwoOneGoCountdown?.StartCountdown(10f);
+            while (threeTwoOneGoDelayTime > 0)
+            {
+                threeTwoOneGoDelayTime -= Time.deltaTime;
+                yield return null;
+            }
         }
-        m_gameTitleCard.OutroAnimation();
-
-        float timeCardDelayTime = m_gameInitDelay * 2f;
-
-        while (timeCardDelayTime > 0)
-        {
-            timeCardDelayTime -= Time.deltaTime;
-            yield return null;
-        }
-        m_blackoutCard.StartFadeOut();
-
-        float countdownDelayTime = m_gameInitDelay * 2f;
-
-        while (timeCardDelayTime > 0)
-        {
-            timeCardDelayTime -= Time.deltaTime;
-            yield return null;
-        }
-
-        float threeTwoOneGoDelayTime = 10f + 1f;
-        m_threeTwoOneGoCountdown?.StartCountdown(10f);
-        while (threeTwoOneGoDelayTime > 0)
-        {
-            threeTwoOneGoDelayTime -= Time.deltaTime;
-            yield return null;
-        }
-
         if(signalGameControllerReady != null) signalGameControllerReady();
+
+
+        foreach (var npcSpawner in m_npcSpawners)
+        {
+            npcSpawner.gameObject.SetActive(true);
+        }
     }
     public override void StartGameOutro(SignalReadinessDelegate func = null)
     {

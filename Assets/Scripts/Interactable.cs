@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using static ItemObjective;
+using static ItemObjectiveData;
 
 public abstract class Interactable : MonoBehaviour
 {
@@ -8,8 +8,8 @@ public abstract class Interactable : MonoBehaviour
     [SerializeField] bool m_isHighlightable = true;
     public bool m_playerInRange = false;
     [SerializeField] protected SpriteRenderer m_highlightSprite;
-    public abstract SupplyItemName Interact(ItemObjective.SupplyItemName supplyHeld, List<ItemObjective.SupplyItemName> suppliesNeeded = null);
-    public abstract bool PlayerCanInteract(ItemObjective.SupplyItemName supplyHeld = ItemObjective.SupplyItemName.NOTHING, List<ItemObjective.SupplyItemName> suppliesNeeded = null);
+    public abstract SupplyItemName Interact(SupplyItemName supplyHeld, List<SupplyItemName> suppliesNeeded = null);
+    public abstract bool PlayerCanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null);
     public virtual void OnFocus() { }
     public virtual void OffFocus() { }
 

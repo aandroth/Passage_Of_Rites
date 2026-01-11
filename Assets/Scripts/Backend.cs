@@ -10,6 +10,7 @@ using System;
 using static UnityEngine.UIElements.UxmlAttributeDescription;
 using static System.Collections.Specialized.BitVector32;
 using UnityEditor.VersionControl;
+using System.Collections.Generic;
 
 public class Backend : MonoBehaviour
 {
@@ -17,12 +18,20 @@ public class Backend : MonoBehaviour
     public ReceivedMessageForGameControllerDelegate ReceivedMessageForGameController;
     public delegate string GetPlayerDataDelegate();
     public GetPlayerDataDelegate GetPlayerData;
+    public delegate string GetItemObjectiveDataDelegate();
+    public GetItemObjectiveDataDelegate GetItemObjectiveData;
     public delegate void SetPlayerChangedDataToCurrentValuesDelegate();
     public SetPlayerChangedDataToCurrentValuesDelegate SetPlayerChangedDataToCurrentValues;
+    public delegate void SetNpcChangedDataToCurrentValuesDelegate();
+    public SetNpcChangedDataToCurrentValuesDelegate SetNpcChangedDataToCurrentValues;
+    public delegate void SetItemObjectiveChangedDataToCurrentValuesDelegate();
+    public SetItemObjectiveChangedDataToCurrentValuesDelegate SetItemObjectiveChangedDataToCurrentValues;
     public delegate void GetTextDataDelegate(string s);
     public GetTextDataDelegate GetTextData;
     public delegate int GetIdFromGameControllerDelegate();
     public GetIdFromGameControllerDelegate GetIdFromGameController;
+    public delegate List<NetworkDataObject_Npc> GetAllNpcChangedDataFromGameControllerDelegate();
+    public GetAllNpcChangedDataFromGameControllerDelegate GetAllNpcChangedDataFromGameController;
 
     public string m_apiGatewayUrl = "https://t2lfwpskr0.execute-api.us-west-2.amazonaws.com/dev";
     public string m_serverUrl = "localhost"; //"18.237.4.137";
@@ -336,11 +345,61 @@ public class Backend : MonoBehaviour
         string changes = GetPlayerData();
         if (changes != "Unchanged")
         {
-            changes = $"Update{changes}";
+            changes = $"Update_Player{changes}";
             Debug.Log($"Sending: {changes}");
             var bytes = System.Text.Encoding.UTF8.GetBytes(changes);
             m_webSocket.Send(bytes);
             SetPlayerChangedDataToCurrentValues();
+        }
+    }
+
+    public void CallAllNpcChangedData()
+    {
+        List<NetworkDataObject_Npc> dataObjects = GetAllNpcChangedDataFromGameController();
+        foreach(NetworkDataObject_Npc npc in dataObjects)
+            SendNpcChangedData(npc);
+    }
+
+    public void SendNpcChangedData(NetworkDataObject_Npc npcData)
+    {
+        string changes = npcData.GetChangedData();
+        if (changes != "Unchanged")
+        {
+            changes = $"Update_Npc,{changes}";
+            Debug.Log($"Sending: {changes}");
+            var bytes = System.Text.Encoding.UTF8.GetBytes(changes);
+            m_webSocket.Send(bytes);
+            SetNpcChangedDataToCurrentValues();
+        }
+    }
+
+    public void SendNpcSpawnData(NetworkDataObject_Npc npcData)
+    {
+        var data = npcData.GetAllData();
+        string dataAsString = $"Spawn_Npc,{data}";
+        Debug.Log($"Sending: {dataAsString}");
+        var bytes = System.Text.Encoding.UTF8.GetBytes(dataAsString);
+        m_webSocket.Send(bytes);
+    }
+
+    public void SendNpcDespawnData(int id)
+    {
+        string dataAsString = $"Despawn_Npc,{id}";
+        Debug.Log($"Sending: {dataAsString}");
+        var bytes = System.Text.Encoding.UTF8.GetBytes(dataAsString);
+        m_webSocket.Send(bytes);
+    }
+
+    public void SendItemObjectiveChangedData()
+    {
+        string changes = GetItemObjectiveData();
+        if (changes != "Unchanged")
+        {
+            changes = $"Update_ItemObjective{changes}";
+            Debug.Log($"Sending: {changes}");
+            var bytes = System.Text.Encoding.UTF8.GetBytes(changes);
+            m_webSocket.Send(bytes);
+            SetItemObjectiveChangedDataToCurrentValues();
         }
     }
 
@@ -384,6 +443,7 @@ public class Backend : MonoBehaviour
             }
             m_connected = false;
             SendServerDataToGameController("", "Make_Owner", new string[] { "", "-1", "f" }); // Stop being a Game Owner
+            SendServerDataToGameController("", "Load_Level", new string[] { "Load_Level", "0" }); // Stop being a Game Owner
         }
     }
 
@@ -420,6 +480,8 @@ public class Backend : MonoBehaviour
             case "Stop_Game":
             case "Start_Outro":
             case "New_Player":
+            case "New_Npc":
+            case "New_ItemObjective":
             case "Ready_For_Next_Level":
             case "Update_Player":
             case "Update_Npc":

@@ -1,7 +1,8 @@
 using UnityEngine;
+using static ItemObjectiveData;
 
 public interface IAccessibleSupplyItem
 {
-    public ItemObjective.SupplyItemName GetSupplyItemName();
-    public void SetSupplyItem(ItemObjective.SupplyItemName supplyItemName);
+    public SupplyItemName GetSupplyItemName();
+    public void SetSupplyItem(SupplyItemName supplyItemName);
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
-using static ItemObjective;
+using static ItemObjectiveData;
 using static ItemObjective_Trap;
 
 public class PlayerStation : Interactable
@@ -99,12 +99,12 @@ public class PlayerStation : Interactable
         m_playerInRange = false;
     }
 
-    public override ItemObjective.SupplyItemName Interact(ItemObjective.SupplyItemName supplyHeld, List<ItemObjective.SupplyItemName> suppliesNeeded = null)
+    public override SupplyItemName Interact(SupplyItemName supplyHeld, List<SupplyItemName> suppliesNeeded = null)
     {
         throw new System.NotImplementedException();
     }
 
-    public override bool PlayerCanInteract(ItemObjective.SupplyItemName supplyHeld = ItemObjective.SupplyItemName.NOTHING, List<ItemObjective.SupplyItemName> suppliesNeeded = null)
+    public override bool PlayerCanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
     {
         throw new System.NotImplementedException();
     }

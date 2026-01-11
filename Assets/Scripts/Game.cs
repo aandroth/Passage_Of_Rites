@@ -9,6 +9,8 @@ public abstract class Game : MonoBehaviour
     public float m_gameCountdownTime = 120.0f;
     public delegate void SignalReadinessDelegate(bool b = false);
     [SerializeField] protected string m_gameTitle = "";
+    public List<Spawner_Npc> m_npcSpawners;
+    public List<Spawner_ItemObjective> m_itemObjectiveSpawners;
     public enum GAME_STATE { INIT, PLAYING, GAME_OVER };
     protected GAME_STATE m_gameState = GAME_STATE.INIT;
 
@@ -17,6 +19,18 @@ public abstract class Game : MonoBehaviour
 
     public delegate void UpdatMainPlayerPoints(int idx);
     public UpdatMainPlayerPoints m_updateMainPlayerPoints;
+    public delegate void RequestServerSpawnNpcDelegate(NetworkDataObject_Npc n);
+    public RequestServerSpawnNpcDelegate m_requestServerSpawnNpc;
+
+    public delegate void RequestServerGetAllDataNpcDelegate();
+    public RequestServerGetChangedDataNpcDelegate m_requestServerGetChangedDataNpc;
+    public delegate void RequestServerGetChangedDataNpcDelegate(NetworkDataObject_Npc n);
+    public RequestServerGetChangedDataNpcDelegate m_requestServerGetAllDataNpc;
+
+    public delegate void RequestServerPutAllDataNpcDelegate(NetworkDataObject_Npc n);
+    public RequestServerPutChangedDataNpcDelegate m_requestServerPutChangedDataNpc;
+    public delegate void RequestServerPutChangedDataNpcDelegate(NetworkDataObject_Npc n);
+    public RequestServerPutChangedDataNpcDelegate m_requestServerPutAllDataNpc;
 
     //[SerializeField] List<>
 
@@ -27,6 +41,8 @@ public abstract class Game : MonoBehaviour
         public string titles;
         public int points;
     }
+    public virtual void SetSpawnerRequestDelegates(RequestServerSpawnNpcDelegate Spawn, Action<int> Despawn, Func<bool> IsOwner) { }
+    public virtual void NpcSpawn(RequestServerSpawnNpcDelegate n) { }
     public virtual void StartGameIntro(SignalReadinessDelegate signalGameControllerReady = null) {  }
     public virtual void StartGameOutro(SignalReadinessDelegate signalGameControllerReady = null) { }
     public virtual int SetPlayerPointsAndGetBackTopPlayer(List<PlayerInfo> playInfoList) { return -1; }

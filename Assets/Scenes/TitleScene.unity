@@ -3081,7 +3081,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dae09917e9aef0d49921e0947bd26b8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_nextLevelIndex: 2
+  m_nextLevelIndex: 1
   m_gameCountdownTime: 120
   m_gameTitle: 
   m_ipAddressText: {fileID: 2099376629}
@@ -3094,7 +3094,7 @@ MonoBehaviour:
   m_ipButtonsList: []
   m_startGameButton: {fileID: 1987848862}
   m_playerNameInputField: {fileID: 1229312337}
-  m_firstLevel: 2
+  m_firstLevel: 1
 --- !u!4 &1376700246
 Transform:
   m_ObjectHideFlags: 0

@@ -1,0 +1,51 @@
+using NUnit.Framework;
+using System;
+using System.Collections;
+using UnityEngine;
+using Random = UnityEngine.Random;
+
+public abstract class Spawner : MonoBehaviour
+{
+    [SerializeField] float m_spawnRadius = 2f;
+    [SerializeField] GameObject m_spawnPrefab;
+    [SerializeField] float m_waitTimeMin = 2, m_waitTimeMax = 4;
+    [SerializeField] float m_delaySpawnTime = 1;
+    [SerializeField] protected int m_spawnLimit = 10, m_spawnCount = 0;
+    protected IEnumerator m_spawnCoroutine;
+
+    public delegate void RequestServerSpawnDelegate(NetworkDataObject_Npc dataObj);
+    public RequestServerSpawnDelegate m_requestServerSpawn;
+    public delegate void RequestServerDespawnDelegate(int npcId);
+    public RequestServerDespawnDelegate m_requestServerDespawn;
+    public delegate bool IsServerOwnerDelegate();
+    public IsServerOwnerDelegate m_isServerOwner;
+
+    public IEnumerator SpawnSequenceCoroutine<T>()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(Random.Range(m_waitTimeMin, m_waitTimeMax) - m_delaySpawnTime); // Adjust spawn interval as needed
+            // Spawner animation/effect can be triggered here
+            yield return new WaitForSeconds(m_delaySpawnTime); // Adjust spawn interval as needed
+            SpawnAndSendToServer();
+        }
+    }
+
+    public abstract void SpawnAndSendToServer();
+    public abstract void DespawnAndSendToServer(int id);
+
+    public T SpawnObject<T>()
+    {
+        Vector2 spawnPosition = (Vector2)transform.position + Random.insideUnitCircle.normalized * m_spawnRadius; // Spawns at the edge of the spawn radius
+        T newObject = Instantiate(m_spawnPrefab, spawnPosition, Quaternion.identity).GetComponent<T>();
+        return newObject;
+    }
+
+    //public T SpawnObjectNetworkData<T>()
+    //{
+    //    NetworkDataObject_Npc newNpc = new NetworkDataObject_Npc();
+        
+    //    T newObject = Instantiate(m_spawnPrefab, spawnPosition, Quaternion.identity).GetComponent<T>();
+    //    return newObject;
+    //}
+}

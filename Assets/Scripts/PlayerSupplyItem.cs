@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Game;
-using static ItemObjective;
-using static ItemObjective_Trap ;
+using static ItemObjectiveData;
+using static ItemObjective ;
 
 public class PlayerSupplyItem : MonoBehaviour, IAccessibleSupplyItem
 {

@@ -5,6 +5,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static NpcTypeData;
 
 public class GameController : MonoBehaviour
 {
@@ -22,8 +23,14 @@ public class GameController : MonoBehaviour
     [SerializeField] string m_endSceneName = "EndingScene";
     [SerializeField] bool m_gameIsPlaying = false;
 
+    [SerializeField] public Dictionary<NpcTypes, GameObject> m_npcTypesToPrefabsDict = new Dictionary<NpcTypes, GameObject>();
 
     public static GameController Instance { get; private set; }
+
+    public void Start()
+    {
+        
+    }
 
     public void OnEnable()
     {
@@ -64,7 +71,7 @@ public class GameController : MonoBehaviour
             m_npcsDict[int.Parse(npcData[1])].PutChangedData(npcData);
     }
 
-    public void UpdateItem(int id, string[] playerData)
+    public void UpdateItemObjective(int id, string[] playerData)
     {
         if (m_playersDict.ContainsKey(id))
             m_playersDict[int.Parse(playerData[1])].PutChangedData(playerData);
@@ -88,6 +95,32 @@ public class GameController : MonoBehaviour
         return go.GetComponent<PlayerControls>();
     }
 
+    public NetworkDataObject_Npc CreateNpc(int id, string[] data)
+    {
+        GameObject go = GameObject.Instantiate(m_npcTypeToPrefab[(NpcTypes)(int.Parse(data[2]))], Vector3.zero, Quaternion.identity);
+        go.GetComponent<NetworkDataObject_Npc>().PutAllData(data);
+
+        if (go.GetComponent<NpcWander>().m_hasItem)
+        {
+
+        }
+
+        return go.GetComponent<NetworkDataObject_Npc>();
+    }
+
+    public NetworkDataObject_Item CreateItem(int id, string[] data)
+    {
+        GameObject go = GameObject.Instantiate(m_npcTypeToPrefab[(NpcTypes)(int.Parse(data[2]))], Vector3.zero, Quaternion.identity);
+        go.GetComponent<NetworkDataObject_Npc>().PutAllData(data);
+
+        if (go.GetComponent<NpcWander>().m_hasItem)
+        {
+
+        }
+
+        return go.GetComponent<NetworkDataObject_Item>();
+    }
+
     public void BecomeGameOwner(bool becameOwner = true)
     {
         Debug.Log($"Ownership is now marked as {becameOwner}");
@@ -99,6 +132,11 @@ public class GameController : MonoBehaviour
         {
             Debug.Log($"Found TitleSceneController");
             titleSceneController.BecomeGameOwner(becameOwner);
+        }
+
+        foreach (var npcDataObject in m_npcsDict.Values)
+        {
+            npcDataObject.PlayerBecameGameOwner();
         }
     }
 
@@ -126,7 +164,7 @@ public class GameController : MonoBehaviour
                 }
                 else if(scene.name != m_endSceneName)
                 {
-
+                    m_game.SetSpawnerRequestDelegates(m_backend.SendNpcSpawnData, m_backend.SendNpcDespawnData, () => { return m_isGameOwner; });
                 }
             }
         }
@@ -174,15 +212,15 @@ public class GameController : MonoBehaviour
             m_backend?.SignalReadinessToServer(m_mainPlayerId);
     }
 
-    public void ReceivedMessage(string data, string action, string[] playerData)
+    public void ReceivedMessage(string data, string action, string[] serverData)
     {
         int id = -1;
-        if (playerData.Length >= 2)
+        if (serverData.Length >= 2)
         {
             try
             {
-                id = playerData.Length >= 2 ? int.Parse(playerData[1]) : -1;
-                Debug.Log($"Received: {data} with action {action} and id {id}, playerData length: {playerData.Length}");
+                id = serverData.Length >= 2 ? int.Parse(serverData[1]) : -1;
+                Debug.Log($"Received: {data} with action {action} and id {id}, playerData length: {serverData.Length}");
             }
             catch
             {
@@ -196,19 +234,19 @@ public class GameController : MonoBehaviour
                 m_mainPlayerId = id;
                 break;
             case "Make_Owner":
-                if(playerData.Length >= 3)
-                    BecomeGameOwner(playerData[2] == "t" ? true : false);
+                if(serverData.Length >= 3)
+                    BecomeGameOwner(serverData[2] == "t" ? true : false);
                 break;
             case "Load_Level":
-                if (playerData.Length >= 2)
+                if (serverData.Length >= 2)
                 {
-                    int levelIndex = int.Parse(playerData[1]);
+                    int levelIndex = int.Parse(serverData[1]);
                     if (levelIndex == 0 && m_backend != null && m_backend.m_connected) { m_backend?.CancelConnection(); }
                     SceneManager.LoadScene(levelIndex);
                 }
                 break;
             case "Start_Intro":
-                if (playerData.Length >= 2)
+                if (serverData.Length >= 2)
                 {
                     Debug.Log("Calling GameIntro");
                     m_game?.StartGameIntro(CallbackForGameControllerSendReadySignal);
@@ -243,22 +281,29 @@ public class GameController : MonoBehaviour
                 m_backend.StopGettingChangedData();
                 break;
             case "New_Player":
-                PlayerControls pc = CreateCharacter(m_mainPlayerId == id, id, playerData);
+                PlayerControls pc = CreateCharacter(m_mainPlayerId == id, id, serverData);
                 m_game?.AssignPlayer(pc, id, m_mainPlayerId == id);
                 if (m_mainPlayerId == id)
                     m_backend.SignalReadinessToServer(id);
                 break;
+            case "New_Npc":
+                m_npcsDict[id] = CreateNpc(id, serverData);
+                break;
+            //case "New_ItemObjective":
+            //    PlayerControls pc = CreateCharacter(m_mainPlayerId == id, id, serverData);
+            //    m_game?.AssignPlayer(pc, id, m_mainPlayerId == id);
+            //    if (m_mainPlayerId == id)
+            //        m_backend.SignalReadinessToServer(id);
+            //    break;
             case "Update_Player":
-                UpdateCharacter(id, playerData);
-                if (id != m_mainPlayerId && playerData[8] != "") m_game?.UpdateOtherPlayerPoints(id, int.Parse(playerData[8]));
+                UpdateCharacter(id, serverData);
+                if (id != m_mainPlayerId && serverData[8] != "") m_game?.UpdateOtherPlayerPoints(id, int.Parse(serverData[8]));
                 break;
             case "Update_Npc":
-                UpdateCharacter(id, playerData);
-                if (id != m_mainPlayerId && playerData[8] != "") m_game?.UpdateOtherPlayerPoints(id, int.Parse(playerData[8]));
+                UpdateNpc(id, serverData);
                 break;
             case "Update_Item":
-                UpdateCharacter(id, playerData);
-                if (id != m_mainPlayerId && playerData[8] != "") m_game?.UpdateOtherPlayerPoints(id, int.Parse(playerData[8]));
+                UpdateItemObjective(id, serverData);
                 break;
         }
     }

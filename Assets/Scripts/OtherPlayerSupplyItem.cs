@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
-using static ItemObjective;
+using static ItemObjectiveData;
 
 public class OtherPlayerSupplyItem : Interactable, IAccessibleSupplyItem
 {
@@ -106,7 +106,7 @@ public class OtherPlayerSupplyItem : Interactable, IAccessibleSupplyItem
     public void ActivateAndSetSupplyItem(SupplyItemName supplyName)
     {
         m_supplyCarriedSpriteRenderer.gameObject.SetActive(true);
-        m_supplyCarriedSpriteRenderer.sprite = ItemObjective.SpriteOfSupplyItem(supplyName);
+        m_supplyCarriedSpriteRenderer.sprite = SpriteOfSupplyItem(supplyName);
         m_supplyStationResourceName = supplyName;
         m_frameSpriteRenderer.SetActive(true);
     }

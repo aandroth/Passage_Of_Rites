@@ -33,6 +33,12 @@ Features:
 4. Alchemist Golem Boss Battle - Whack the golem with a stick and then make your mark on the wall.
 							   - Outside the door to the laboratory
 
+Additional Ideas:
+
+5. On the Run - A group of soldiers are trying to run down the players
+			  - The players gather construct and set traps as they run down a tunnel
+			  - The player who takes out the most soldiers is the winner
+
 
 Backend
 ///////////////////////////////////////////

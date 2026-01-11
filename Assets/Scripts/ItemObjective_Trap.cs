@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static ItemObjectiveData;
 
 public class ItemObjective_Trap : ItemObjective
 {
@@ -91,7 +92,7 @@ public class ItemObjective_Trap : ItemObjective
         m_neededSupplyItems = new List<SupplyItemName>(m_trapTypeToSupplyItemDict[trapType]);
 
         for (int i = 0; i < m_suppliesNeededIcons.Count; i++)
-            m_suppliesNeededIcons[i].sprite = ItemObjective.SpriteOfSupplyItem(m_neededSupplyItems[i]);
+            m_suppliesNeededIcons[i].sprite = SpriteOfSupplyItem(m_neededSupplyItems[i]);
 
         m_finishedTrapSpriteRenderer.sprite = m_trapTypeToSpriteDict[trapType];
         m_finishedTrapNameTMP.text = m_trapTypeToNameDict[trapType];

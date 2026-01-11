@@ -6,6 +6,7 @@ public interface INetworkDataObject
 {
     public void SetChangedDataToCurrentValues();
     public string GetChangedData();
+    public string GetAllData();
 
     public void PutChangedData(string[] changedDataList);
 }

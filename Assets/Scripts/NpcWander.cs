@@ -7,6 +7,11 @@ using static PlayerControls;
 
 public class NpcWander : MonoBehaviour
 {
+
+    [SerializeField] public int m_id { get; private set; }
+    [SerializeField] public int m_spawnerId { get; private set; }
+    [SerializeField] public bool m_hasItem { get; private set; }
+    [SerializeField] public NpcTypeData.NpcTypes m_npcType { get; private set; }
     [SerializeField] float m_runTimeMin = 2f, m_runTimeMax = 4f;
     [SerializeField] float m_waitTimeMin = 1f, m_waitTimeMax = 3f;
     [SerializeField] int m_facingDirection = 1;
@@ -19,11 +24,25 @@ public class NpcWander : MonoBehaviour
     [SerializeField] NPC_STATE m_state = NPC_STATE.IDLE;
     private IEnumerator m_wanderCoroutine;
 
-    [SerializeField] NetworkDataObject_Npc m_networkDataObjectNpc = new NetworkDataObject_Npc();
+    [SerializeField] public NetworkDataObject_Npc m_networkDataObjectNpc { get; private set; } = new NetworkDataObject_Npc();
 
-    public void Start()
+
+    public delegate void OnDestroyDelegate(int id);
+    public OnDestroyDelegate m_onDestroyDelegate;
+
+    public void FillNetworkDataObjectDelegates()
     {
-        
+        m_networkDataObjectNpc.m_getId = () => { return m_id; };
+        m_networkDataObjectNpc.m_getSpawnerId = () => { return m_spawnerId; };
+        m_networkDataObjectNpc.m_setIdSpawnerIdAndNpcType = SetIdSpawnerIdAndNpcType;
+        m_networkDataObjectNpc.m_getCurrentValues = GetCurrentValues;
+        m_networkDataObjectNpc.m_getAllCurrentValues = GetAllCurrentValues;
+        m_networkDataObjectNpc.m_updateTransform = UpdateTransformValues;
+        m_networkDataObjectNpc.m_updateState = UpdateState;
+        m_networkDataObjectNpc.m_playerBecameGameOwner = StartWandering;
+
+        m_networkDataObjectNpc.m_prevData.m_prevTransformData = new List<float>() {0f,0f,0f};
+        m_networkDataObjectNpc.m_prevData.m_state = 0;
 
         m_wanderCoroutine = WanderCoroutine();
         if(GameController.Instance.m_isGameOwner)
@@ -57,7 +76,7 @@ public class NpcWander : MonoBehaviour
         while (true)
         {
             // pick randirection
-            m_wanderDirection = Random.insideUnitCircle.normalized;
+            ChangeToRandomDirection();
             CorrectFacing();
 
             // run in that direction for some time
@@ -72,6 +91,11 @@ public class NpcWander : MonoBehaviour
             PlayIdleCycle();
             yield return new WaitForSeconds(Random.Range(m_waitTimeMin, m_waitTimeMax)); // Adjust spawn interval as needed
         }
+    }
+
+    private void ChangeToRandomDirection()
+    {
+        m_wanderDirection = Random.insideUnitCircle.normalized;
     }
 
     private void PlayIdleCycle()
@@ -102,13 +126,15 @@ public class NpcWander : MonoBehaviour
     public void OnCollisionEnter2D(Collision2D collision)
     {
         Debug.Log("NpcWander: Collision detected, changing direction.");
-        m_wanderDirection *= -1;
+        ChangeToRandomDirection();
         CorrectFacing();
     }
 
-    public void DestroyedWasCalled()
+    public void SetIdSpawnerIdAndNpcType(int id, int spawnerId, int type)
     {
-
+        m_id = id;
+        m_spawnerId = spawnerId;
+        m_npcType = (NpcTypeData.NpcTypes)(type);
     }
 
     public void UpdateTransformValues(List<float?> possibleValues)
@@ -131,8 +157,15 @@ public class NpcWander : MonoBehaviour
 
     public void UpdateState(int state)
     {
-        m_state = (NPC_STATE)state;
+        NPC_STATE newState = (NPC_STATE)state;
+        if (newState == NPC_STATE.DESTROYED)
+            Destroy(gameObject);
+        else if(newState == NPC_STATE.MOVING && m_state != NPC_STATE.MOVING)
+            PlayMovingCycle();
+        else if(newState == NPC_STATE.IDLE && m_state != NPC_STATE.IDLE)
+            PlayIdleCycle();
     }
+
 
     public List<float> GetCurrentValues()
     {
@@ -142,5 +175,22 @@ public class NpcWander : MonoBehaviour
             transform.localScale.x,
             (float)m_state
         };
+    }
+
+    public List<float> GetAllCurrentValues()
+    {
+        return new List<float>() {
+            m_id,
+            m_spawnerId,
+            (int)m_npcType,
+            transform.position.x,
+            transform.position.y,
+            transform.localScale.x,
+            (float)m_state
+        };
+    }
+    public void OnDestroy()
+    {
+        m_onDestroyDelegate?.Invoke(m_id);
     }
 }

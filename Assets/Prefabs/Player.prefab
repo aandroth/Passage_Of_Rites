@@ -62,9 +62,7 @@ MonoBehaviour:
   m_animatorBody: {fileID: 7735265491983928664}
   m_animatorStatusEffect: {fileID: 4347719326063031909}
   m_walkCycleName: WalkCycle
-  m_walkCycleEyesName: WalkCycleEyes
   m_idleCycleName: Idle
-  m_idleCycleEyesName: IdleEyes
   m_position: {x: 0, y: 0}
   m_color: {r: 0, g: 0, b: 0, a: 0}
   m_speed: 3
@@ -1208,8 +1206,16 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6176665735645756114, guid: 68a92c62f2e539f43b06cd48621b1c09, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6176665735645756114, guid: 68a92c62f2e539f43b06cd48621b1c09, type: 3}
       propertyPath: m_SortingOrder
       value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 6176665735645756114, guid: 68a92c62f2e539f43b06cd48621b1c09, type: 3}
+      propertyPath: m_WasSpriteAssigned
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8374129193568168552, guid: 68a92c62f2e539f43b06cd48621b1c09, type: 3}
       propertyPath: m_Name
