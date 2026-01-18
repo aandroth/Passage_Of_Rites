@@ -9,6 +9,7 @@ using static NpcTypeData;
 
 public class GameController : MonoBehaviour
 {
+    [SerializeField] bool m_skipGameIntros = false;
     public float m_pullChangedDataInterval;
     public Dictionary<int, PlayerControls> m_playersDict = new Dictionary<int, PlayerControls>();
     public Dictionary<int, NetworkDataObject_Npc> m_npcsDict = new Dictionary<int, NetworkDataObject_Npc>();
@@ -54,20 +55,31 @@ public class GameController : MonoBehaviour
 
             m_backend.GetPlayerData = GetPlayerChangedData;
             m_backend.SetPlayerChangedDataToCurrentValues = SetPlayerChangedDataToCurrentValues;
+            m_backend.GetAllNpcChangedDataFromGameController = CallAllNpcChangedDataToServer;
             m_backend.ReceivedMessageForGameController = ReceivedMessage;
             m_backend.GetIdFromGameController = () => { return m_mainPlayerId; };
         }
     }
 
+    public bool IsGameOwner()
+    {
+        return Instance.m_isGameOwner;
+    }
+
     public void UpdateCharacter(int id, string[] playerData)
     {
-        if (m_playersDict.ContainsKey(id))
+        if (m_playersDict.ContainsKey(id) && m_mainPlayerId != id)
+        {
+            Debug.Log($"Player {id} is in dict, Updating..."); 
             m_playersDict[int.Parse(playerData[1])].PutChangedData(playerData);
+        }
+        else
+            Debug.Log($"Player {id} is NOT in dict");
     }
 
     public void UpdateNpc(int id, string[] npcData)
     {
-        if (m_playersDict.ContainsKey(id))
+        if (m_npcsDict.ContainsKey(id) && !m_isGameOwner)
             m_npcsDict[int.Parse(npcData[1])].PutChangedData(npcData);
     }
 
@@ -75,6 +87,11 @@ public class GameController : MonoBehaviour
     {
         if (m_playersDict.ContainsKey(id))
             m_playersDict[int.Parse(playerData[1])].PutChangedData(playerData);
+    }
+
+    public void SetInterval(int id, string[] playerData)
+    {
+        m_backend.m_intervalTime = float.Parse(playerData[2]);
     }
 
     public void SetPlayerLocation(Vector3 position)
@@ -86,7 +103,6 @@ public class GameController : MonoBehaviour
     {
         GameObject go = GameObject.Instantiate(m_playerPrefab, Vector3.zero, Quaternion.identity);
         go.GetComponent<PlayerControls>().m_id = id;
-        go.GetComponent<PlayerControls>().m_isMainPlayer = isMainPlayer;
         go.GetComponent<PlayerControls>().SetPlayerAsMainOrOther(isMainPlayer);
         go.GetComponent<PlayerControls>().PutAllData(data);
         m_playersDict[id] = go.GetComponent<PlayerControls>();
@@ -95,30 +111,36 @@ public class GameController : MonoBehaviour
         return go.GetComponent<PlayerControls>();
     }
 
-    public NetworkDataObject_Npc CreateNpc(int id, string[] data)
+    public void SpawnNpcFromServer(int id, string[] data)
     {
-        GameObject go = GameObject.Instantiate(m_npcTypeToPrefab[(NpcTypes)(int.Parse(data[2]))], Vector3.zero, Quaternion.identity);
-        go.GetComponent<NetworkDataObject_Npc>().PutAllData(data);
+        if (m_npcsDict.ContainsKey(id))
+            return;
 
-        if (go.GetComponent<NpcWander>().m_hasItem)
-        {
-
-        }
-
-        return go.GetComponent<NetworkDataObject_Npc>();
+        NetworkDataObject_Npc newNpcNetworkData = m_game.SpawnNpcFromServer(data);
+        if(newNpcNetworkData != null)
+            m_npcsDict[id] = newNpcNetworkData;
     }
 
-    public NetworkDataObject_Item CreateItem(int id, string[] data)
+    public void SpawnNpcFromSpawner(NetworkDataObject_Npc npc)
     {
-        GameObject go = GameObject.Instantiate(m_npcTypeToPrefab[(NpcTypes)(int.Parse(data[2]))], Vector3.zero, Quaternion.identity);
-        go.GetComponent<NetworkDataObject_Npc>().PutAllData(data);
+        if (m_npcsDict.ContainsKey(npc.m_getId()))
+            return;
 
-        if (go.GetComponent<NpcWander>().m_hasItem)
-        {
+        m_npcsDict[npc.m_getId()] = npc;
+        m_backend.SendNpcSpawnData(npc);
+    }
 
-        }
+    public void DespawnNpc(int npcId)
+    {
+        if (!m_npcsDict.ContainsKey(npcId))
+            return;
 
-        return go.GetComponent<NetworkDataObject_Item>();
+        m_npcsDict.Remove(npcId);
+    }
+
+    public void CreateItem(int id, string[] data)
+    {
+
     }
 
     public void BecomeGameOwner(bool becameOwner = true)
@@ -144,6 +166,14 @@ public class GameController : MonoBehaviour
     {
         return m_mainPlayerId == -1 ? "" : m_playersDict[m_mainPlayerId].GetChangedData();
     }
+
+    public void CallAllNpcChangedDataToServer()
+    {
+        foreach (NetworkDataObject_Npc npc in m_npcsDict.Values)
+        {
+            m_backend.SendNpcChangedData(npc);
+        }
+    }
     public void SetPlayerChangedDataToCurrentValues()
     {
         if(m_mainPlayerId != -1) m_playersDict[m_mainPlayerId].SetChangedDataToCurrentValues();
@@ -155,6 +185,7 @@ public class GameController : MonoBehaviour
             m_game = GameObject.FindAnyObjectByType<Game>();
             if (m_game != null)
             {
+                m_game.m_skipIntro = m_skipGameIntros;
                 m_backend.SignalReadinessToServer(m_mainPlayerId);
                 if (scene.name == m_titleSceneName && m_mainPlayerId != -1)
                 {
@@ -164,7 +195,9 @@ public class GameController : MonoBehaviour
                 }
                 else if(scene.name != m_endSceneName)
                 {
-                    m_game.SetSpawnerRequestDelegates(m_backend.SendNpcSpawnData, m_backend.SendNpcDespawnData, () => { return m_isGameOwner; });
+                    m_game.SetSpawnerRequestDelegatesAndIndexes(SpawnNpcFromSpawner, 
+                                                                DespawnNpc, 
+                                                                () => { return m_isGameOwner; });
                 }
             }
         }
@@ -220,7 +253,7 @@ public class GameController : MonoBehaviour
             try
             {
                 id = serverData.Length >= 2 ? int.Parse(serverData[1]) : -1;
-                Debug.Log($"Received: {data} with action {action} and id {id}, playerData length: {serverData.Length}");
+                Debug.Log($"Received: {serverData} with action {action} and id {id}, playerData length: {serverData.Length}");
             }
             catch
             {
@@ -287,7 +320,7 @@ public class GameController : MonoBehaviour
                     m_backend.SignalReadinessToServer(id);
                 break;
             case "New_Npc":
-                m_npcsDict[id] = CreateNpc(id, serverData);
+                SpawnNpcFromServer(id, serverData);
                 break;
             //case "New_ItemObjective":
             //    PlayerControls pc = CreateCharacter(m_mainPlayerId == id, id, serverData);
@@ -304,6 +337,9 @@ public class GameController : MonoBehaviour
                 break;
             case "Update_Item":
                 UpdateItemObjective(id, serverData);
+                break;
+            case "Set_Interval":
+                SetInterval(id, serverData);
                 break;
         }
     }

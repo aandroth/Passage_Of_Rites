@@ -6,6 +6,8 @@ using Random = UnityEngine.Random;
 
 public abstract class Spawner : MonoBehaviour
 {
+    [SerializeField] public int m_index = 0;
+    [SerializeField] Transform m_SpawnCenterLocation;
     [SerializeField] float m_spawnRadius = 2f;
     [SerializeField] GameObject m_spawnPrefab;
     [SerializeField] float m_waitTimeMin = 2, m_waitTimeMax = 4;
@@ -17,8 +19,18 @@ public abstract class Spawner : MonoBehaviour
     public RequestServerSpawnDelegate m_requestServerSpawn;
     public delegate void RequestServerDespawnDelegate(int npcId);
     public RequestServerDespawnDelegate m_requestServerDespawn;
+    public delegate bool SpawnCommandFromServerDelegate();
+    public SpawnCommandFromServerDelegate m_spawnCommandFromServer;
     public delegate bool IsServerOwnerDelegate();
     public IsServerOwnerDelegate m_isServerOwner;
+
+    public void Start()
+    {
+        if(NpcTypeData.m_npcTypeToPrefab == null)
+        {
+            NpcTypeData.LoadResourcesIntoTypePrefabDict();
+        }
+    }
 
     public IEnumerator SpawnSequenceCoroutine<T>()
     {
@@ -36,7 +48,7 @@ public abstract class Spawner : MonoBehaviour
 
     public T SpawnObject<T>()
     {
-        Vector2 spawnPosition = (Vector2)transform.position + Random.insideUnitCircle.normalized * m_spawnRadius; // Spawns at the edge of the spawn radius
+        Vector2 spawnPosition = (Vector2)m_SpawnCenterLocation.position + Random.insideUnitCircle.normalized * m_spawnRadius; // Spawns at the edge of the spawn radius
         T newObject = Instantiate(m_spawnPrefab, spawnPosition, Quaternion.identity).GetComponent<T>();
         return newObject;
     }

@@ -61,41 +61,49 @@ public class WorkshopGame : Game
     }
     public IEnumerator GameIntro(SignalReadinessDelegate signalGameControllerReady = null)
     {
-        float initDelayTime = m_gameInitDelay;
-
-        while (initDelayTime > 0)
+        if (!m_skipIntro)
         {
-            initDelayTime -= Time.deltaTime;
-            yield return null;
+            float initDelayTime = m_gameInitDelay;
+
+            while (initDelayTime > 0)
+            {
+                initDelayTime -= Time.deltaTime;
+                yield return null;
+            }
+            m_gameTitleCard.OutroAnimation();
+
+            float timeCardDelayTime = m_gameInitDelay * 2f;
+
+            while (timeCardDelayTime > 0)
+            {
+                timeCardDelayTime -= Time.deltaTime;
+                yield return null;
+            }
+            m_blackoutCard.StartFadeOut();
+
+            float countdownDelayTime = m_gameInitDelay * 2f;
+
+            while (timeCardDelayTime > 0)
+            {
+                timeCardDelayTime -= Time.deltaTime;
+                yield return null;
+            }
+
+            float threeTwoOneGoDelayTime = 10f + 1f;
+            m_threeTwoOneGoCountdown?.StartCountdown(10f);
+            while (threeTwoOneGoDelayTime > 0)
+            {
+                threeTwoOneGoDelayTime -= Time.deltaTime;
+                yield return null;
+            }
         }
-        m_gameTitleCard.OutroAnimation();
-
-        float timeCardDelayTime = m_gameInitDelay*2f;
-
-        while (timeCardDelayTime > 0)
+        else
         {
-            timeCardDelayTime -= Time.deltaTime;
-            yield return null;
-        }
-        m_blackoutCard.StartFadeOut();
-
-        float countdownDelayTime = m_gameInitDelay * 2f;
-
-        while (timeCardDelayTime > 0)
-        {
-            timeCardDelayTime -= Time.deltaTime;
-            yield return null;
+            m_gameTitleCard.gameObject.SetActive(false);
+            m_blackoutCard.gameObject.SetActive(false);
         }
 
-        float threeTwoOneGoDelayTime = 10f + 1f;
-        m_threeTwoOneGoCountdown?.StartCountdown(10f);
-        while (threeTwoOneGoDelayTime > 0)
-        {
-            threeTwoOneGoDelayTime -= Time.deltaTime;
-            yield return null;
-        }
-
-        signalGameControllerReady();
+            signalGameControllerReady();
     }
     public override void StartGameOutro(SignalReadinessDelegate func = null)
     {

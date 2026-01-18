@@ -114,11 +114,13 @@ public class PlayerControls : MonoBehaviour
     {
         if (isMainPlayer)
         {
+            m_isMainPlayer = true;
             m_accessibleSupplyItem = m_playerSupplyItem;
             m_otherPlayerSupplyItem.gameObject.SetActive(false);
         }
         else
         {
+            m_isMainPlayer = false;
             m_accessibleSupplyItem = m_otherPlayerSupplyItem;
             m_playerSupplyItem.gameObject.SetActive(false);
         }
@@ -224,11 +226,14 @@ public class PlayerControls : MonoBehaviour
         //"Action, id, position_X, position_Y, m_playerSprite.localScale_X, state, carriedItem, titles, points";
         //      0,  1,          2,          3,                           4,     5,           6,      7,      8
 
+
         Vector3 position = transform.localPosition;
         if (changedDataList[2] != "") position.x = float.Parse(changedDataList[2]);
         if (changedDataList[3] != "") position.y = float.Parse(changedDataList[3]);
         float positionDelta = Vector2.Distance(position, transform.localPosition);
         if (m_isMainPlayer && positionDelta >= m_positionDeltaThreshold)
+            transform.localPosition = position;
+        else
             transform.localPosition = position;
 
         Vector3 scale = m_playerSprite.transform.localScale;
@@ -281,6 +286,7 @@ public class PlayerControls : MonoBehaviour
         Vector3 scale = m_playerSprite.transform.localScale;
         scale.x = float.Parse(allDataList[4]);
         m_playerSprite.transform.localScale = scale;
+
 
         int state = int.Parse(allDataList[5]);
         if ((int)m_state != state)

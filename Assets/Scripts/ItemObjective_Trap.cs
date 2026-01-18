@@ -45,7 +45,9 @@ public class ItemObjective_Trap : ItemObjective
 
     public void Start()
     {
-        m_trapTypeToSpriteDict = new Dictionary<TrapType, Sprite> {
+        if (m_trapTypeToSpriteDict == null)
+        {
+            m_trapTypeToSpriteDict = new Dictionary<TrapType, Sprite> {
             {TrapType.NOTHING,             Resources.Load<Sprite>($"{spritePath_Traps}Blank")},
             {TrapType.FALLING_RATS,        Resources.Load<Sprite>($"{spritePath_Traps}FallingRats")},
             {TrapType.SWINGING_BLADE,      Resources.Load<Sprite>($"{spritePath_Traps}SwingingBlade")},
@@ -53,7 +55,8 @@ public class ItemObjective_Trap : ItemObjective
             {TrapType.SLIDE_INTO_SPIKES,   Resources.Load<Sprite>($"{spritePath_Traps}OiledSpikeTrap")},
             {TrapType.RAT_ON_A_STICK,      Resources.Load<Sprite>($"{spritePath_Traps}RatFlail")},
             {TrapType.BURNING_OIL,         Resources.Load<Sprite>($"{spritePath_Traps}BurningOil")}
-        };
+            };
+        }
         Debug.Log($"m_finishedTrapSpriteRenderer: {m_finishedTrapSpriteRenderer.gameObject}");
     }
 

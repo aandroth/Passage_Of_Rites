@@ -6,8 +6,6 @@ using UnityEngine;
 
 public class RatCatchGame : Game
 {
-    [SerializeField] public bool m_skipIntro = false;
-
     [SerializeField] private TMP_Text m_mainPlayerScoreText;
     [SerializeField] private float m_gameInitDelay = 0;
     [SerializeField] private float m_holdOnWinnersDelay = 0;
@@ -35,25 +33,26 @@ public class RatCatchGame : Game
     public List<TMP_Text> m_winnerTexts;
 
     [SerializeField] Camera_FollowPlayer m_mainPlayerCameraFollow;
-    private void OnEnable()
-    {
-        for (int i = 0; i < 15; i++)
-        {
+    //private void OnEnable()
+    //{
+    //    for (int i = 0; i < 15; i++)
+    //    {
 
-            m_npcSpawners[0].SpawnNpc();
-        }
-    }
+    //        m_npcSpawners[0].SpawnNpc();
+    //    }
+    //}
 
 
 
-    public override void SetSpawnerRequestDelegates(RequestServerSpawnNpcDelegate Spawn, Action<int> Despawn, Func<bool> IsOwner)
+    public override void SetSpawnerRequestDelegatesAndIndexes(RequestServerSpawnNpcDelegate Spawn, Action<int> Despawn, Func<bool> IsOwner)
     {
         // Set the spawner to request the server to create the npc through the RatCatchGame
-        foreach (var npcSpawner in m_npcSpawners)
+        for(int i=0; i < m_npcSpawners.Count; ++i)
         {
-            npcSpawner.m_requestServerSpawn = (NetworkDataObject_Npc n) => Spawn(n);
-            npcSpawner.m_requestServerDespawn = (int i) => Despawn(i);
-            npcSpawner.m_isServerOwner = () => { return IsOwner(); };
+            m_npcSpawners[i].m_requestServerSpawn = (NetworkDataObject_Npc n) => Spawn(n);
+            m_npcSpawners[i].m_requestServerDespawn = (int i) => Despawn(i);
+            m_npcSpawners[i].m_isServerOwner = () => { return IsOwner(); };
+            m_npcSpawners[i].m_index = i;
         }
     }
 
@@ -106,7 +105,12 @@ public class RatCatchGame : Game
                 yield return null;
             }
         }
-        if(signalGameControllerReady != null) signalGameControllerReady();
+        else
+        {
+            m_gameTitleCard.gameObject.SetActive(false);
+            m_blackoutCard.gameObject.SetActive(false);
+        }
+        if (signalGameControllerReady != null) signalGameControllerReady();
 
 
         foreach (var npcSpawner in m_npcSpawners)

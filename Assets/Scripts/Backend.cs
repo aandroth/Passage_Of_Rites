@@ -1,16 +1,9 @@
-using System.Xml.Linq;
-using Unity.VisualScripting;
-using UnityEngine;
-using UnityEngine.UIElements;
 using NativeWebSocket;
-using System.Threading.Tasks;
-using UnityEngine.Networking;
-using System.Collections;
 using System;
-using static UnityEngine.UIElements.UxmlAttributeDescription;
-using static System.Collections.Specialized.BitVector32;
-using UnityEditor.VersionControl;
-using System.Collections.Generic;
+using System.Collections;
+using TMPro;
+using UnityEngine;
+using UnityEngine.Networking;
 
 public class Backend : MonoBehaviour
 {
@@ -30,7 +23,7 @@ public class Backend : MonoBehaviour
     public GetTextDataDelegate GetTextData;
     public delegate int GetIdFromGameControllerDelegate();
     public GetIdFromGameControllerDelegate GetIdFromGameController;
-    public delegate List<NetworkDataObject_Npc> GetAllNpcChangedDataFromGameControllerDelegate();
+    public delegate void GetAllNpcChangedDataFromGameControllerDelegate();
     public GetAllNpcChangedDataFromGameControllerDelegate GetAllNpcChangedDataFromGameController;
 
     public string m_apiGatewayUrl = "https://t2lfwpskr0.execute-api.us-west-2.amazonaws.com/dev";
@@ -38,11 +31,14 @@ public class Backend : MonoBehaviour
     public string[] m_serverUrlList = new string[0];
     public WebSocket m_webSocket;
     public int m_webSocketConnectionAttemptsToTry = 3;
-    public float intervalTimeCurr = 0f;
-    public float intervalTime = 0.3f;
+    public float m_intervalTimeCurr = 0f;
+    public float m_intervalTime = 0.3f;
     public bool m_gameInProgress = false;
     public bool m_connected = false;
     public string urlResult;
+    private int pings;
+    private float pingTiming = 0, pingTimePrev = 0;
+    [SerializeField] TMP_Text pingText;
     //public string m_defaultUrl = "localhost:3000/hello";
 
     public static Backend Instance { get; private set; }
@@ -168,37 +164,47 @@ public class Backend : MonoBehaviour
 
     public IEnumerator RequestListOfServersCoroutine(Action<string[]> callbackFn)
     {
-        if (m_serverUrl == "localhost")
+        Debug.Log($"Requesting all existing servers at {m_apiGatewayUrl}/ListGames");
+        using (UnityWebRequest serverRequest = UnityWebRequest.Get(m_apiGatewayUrl + "/ListGames"))
         {
-            Debug.Log($"Requesting all existing servers at localhost");
-            callbackFn(new string[] { "localhost" });
-            Debug.Log($"RequestListOfServers SUCCESS: localhost");
-        }
-        else
-        {
-            Debug.Log($"Requesting all existing servers at {m_apiGatewayUrl}/ListGames");
-            using (UnityWebRequest serverRequest = UnityWebRequest.Get(m_apiGatewayUrl + "/ListGames"))
+            Debug.Log($"Request made");
+            yield return serverRequest.SendWebRequest();
+            string errorString = "There was an error? Of course there was an error. Why couldn't it just work!?\n- you, probably";
+            switch (serverRequest.result)
             {
-                Debug.Log($"Request made");
-                yield return serverRequest.SendWebRequest();
-                string errorString = "There was an error? Of course there was an error. Why couldn't it just work!?\n- you, probably";
-                switch (serverRequest.result)
-                {
-                    case UnityWebRequest.Result.ConnectionError: 
-                    case UnityWebRequest.Result.DataProcessingError:
-                    case UnityWebRequest.Result.ProtocolError:
-                        Debug.Log(errorString);
-                        Debug.Log(serverRequest.result);
-                        break;
-                    case UnityWebRequest.Result.Success:
-                        var data = JsonUtility.FromJson<JsonClassList>(serverRequest.downloadHandler.text);
-                        Debug.Log($"RequestListOfServers SUCCESS: {(m_serverUrl)}, {data.body.Length}");
-                        callbackFn(data.body);
-                        break;
-                }
+                case UnityWebRequest.Result.ConnectionError: 
+                case UnityWebRequest.Result.DataProcessingError:
+                case UnityWebRequest.Result.ProtocolError:
+                    Debug.Log(errorString);
+                    Debug.Log(serverRequest.result);
+                    callbackFn(new string[] { "localhost" });
+                    break;
+                case UnityWebRequest.Result.Success:
+                    var data = JsonUtility.FromJson<JsonClassList>(serverRequest.downloadHandler.text);
+                    Debug.Log($"RequestListOfServers SUCCESS: {(m_serverUrl)}, {data.body.Length}");
+                    callbackFn(data.body);
+                    break;
             }
         }
         Debug.Log($"Request finished");
+    }
+    public void ServerPing()
+    {
+        pingTiming += (float)Time.timeAsDouble - pingTimePrev;
+        pingTimePrev = (float)Time.timeAsDouble;
+        ++pings;
+        if(pingTiming > 1)
+        {
+            pingText.text = $"Ping: ({pings})";
+            pingTiming = 0;
+            pings = 0;
+        }
+    }
+    public void PingToServer()
+    {
+        string pingRequest = $"Ping";
+        var bytes = System.Text.Encoding.UTF8.GetBytes(pingRequest);
+        m_webSocket.Send(bytes);
     }
     public System.Threading.Tasks.Task RequestServerToChangeName(string name)
     {
@@ -211,6 +217,21 @@ public class Backend : MonoBehaviour
             var bytes = System.Text.Encoding.UTF8.GetBytes(nameChangeRequest);
             m_webSocket.Send(bytes);
             Debug.Log($"Name change request finished");
+        }
+
+        return System.Threading.Tasks.Task.CompletedTask;
+    }
+    public System.Threading.Tasks.Task RequestServerToSetInterval()
+    {
+        if (this == Instance)
+        {
+            //"Action, id, name
+            //      0,  1,    2
+            string setIntervalRequest = $"Set_Interval,{GetIdFromGameController()},{this.m_intervalTime}";
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(setIntervalRequest);
+            m_webSocket.Send(bytes);
+            Debug.Log($"setIntervalRequest finished");
         }
 
         return System.Threading.Tasks.Task.CompletedTask;
@@ -331,11 +352,14 @@ public class Backend : MonoBehaviour
 
         if (m_connected && GetPlayerData != null && m_gameInProgress)
         {
-            intervalTimeCurr += Time.deltaTime;
-            if (intervalTimeCurr >= intervalTime)
+            m_intervalTimeCurr += Time.deltaTime;
+            if (m_intervalTimeCurr >= m_intervalTime)
             {
-                intervalTimeCurr = 0;
-                SendPlayerChangedData();
+                m_intervalTimeCurr = 0;
+                SendPlayerChangedData(); 
+                if(GameController.Instance.m_isGameOwner)
+                    GetAllNpcChangedDataFromGameController();
+                PingToServer();
             }
         }
     }
@@ -353,30 +377,23 @@ public class Backend : MonoBehaviour
         }
     }
 
-    public void CallAllNpcChangedData()
-    {
-        List<NetworkDataObject_Npc> dataObjects = GetAllNpcChangedDataFromGameController();
-        foreach(NetworkDataObject_Npc npc in dataObjects)
-            SendNpcChangedData(npc);
-    }
-
     public void SendNpcChangedData(NetworkDataObject_Npc npcData)
     {
         string changes = npcData.GetChangedData();
         if (changes != "Unchanged")
         {
-            changes = $"Update_Npc,{changes}";
+            changes = $"Update_Npc{changes}";
             Debug.Log($"Sending: {changes}");
             var bytes = System.Text.Encoding.UTF8.GetBytes(changes);
             m_webSocket.Send(bytes);
-            SetNpcChangedDataToCurrentValues();
+            npcData.SetChangedDataToCurrentValues();
         }
     }
 
     public void SendNpcSpawnData(NetworkDataObject_Npc npcData)
     {
         var data = npcData.GetAllData();
-        string dataAsString = $"Spawn_Npc,{data}";
+        string dataAsString = $"Spawn_Npc{data}";
         Debug.Log($"Sending: {dataAsString}");
         var bytes = System.Text.Encoding.UTF8.GetBytes(dataAsString);
         m_webSocket.Send(bytes);
@@ -384,7 +401,7 @@ public class Backend : MonoBehaviour
 
     public void SendNpcDespawnData(int id)
     {
-        string dataAsString = $"Despawn_Npc,{id}";
+        string dataAsString = $"Despawn_Npc{id}";
         Debug.Log($"Sending: {dataAsString}");
         var bytes = System.Text.Encoding.UTF8.GetBytes(dataAsString);
         m_webSocket.Send(bytes);
@@ -486,7 +503,11 @@ public class Backend : MonoBehaviour
             case "Update_Player":
             case "Update_Npc":
             case "Update_Item":
+            case "Set_Interval":
                 SendServerDataToGameController(data, action, playerData);
+                break;
+            case "Ping":
+                ServerPing();
                 break;
             default:
                 Debug.LogWarning($"Unhandled action at backend: {action}");

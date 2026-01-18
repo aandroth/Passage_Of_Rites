@@ -5,6 +5,7 @@ using UnityEngine;
 
 public abstract class Game : MonoBehaviour
 {
+    [SerializeField] public bool m_skipIntro = false;
     public int m_nextLevelIndex = 0;
     public float m_gameCountdownTime = 120.0f;
     public delegate void SignalReadinessDelegate(bool b = false);
@@ -41,7 +42,7 @@ public abstract class Game : MonoBehaviour
         public string titles;
         public int points;
     }
-    public virtual void SetSpawnerRequestDelegates(RequestServerSpawnNpcDelegate Spawn, Action<int> Despawn, Func<bool> IsOwner) { }
+    public virtual void SetSpawnerRequestDelegatesAndIndexes(RequestServerSpawnNpcDelegate Spawn, Action<int> Despawn, Func<bool> IsOwner) { }
     public virtual void NpcSpawn(RequestServerSpawnNpcDelegate n) { }
     public virtual void StartGameIntro(SignalReadinessDelegate signalGameControllerReady = null) {  }
     public virtual void StartGameOutro(SignalReadinessDelegate signalGameControllerReady = null) { }
@@ -58,5 +59,20 @@ public abstract class Game : MonoBehaviour
     public virtual string GetGameTitle() { return m_gameTitle; }
 
     public virtual void UpdateOtherPlayerPoints(int playerIndex, int points) { }
+
+    public virtual NetworkDataObject_Npc SpawnNpcFromServer(string[] data)
+    {
+        //"Action, id, spawnerId, NpcType, position_X, position_Y, transform.localScale_X, state";
+        //      0,  1,         2,       3,          4,          5,                      6,     7
+
+        int spawnerId = int.Parse(data[2]);
+        if (m_npcSpawners.Count > 0 && m_npcSpawners.Count > spawnerId)
+        {
+            NetworkDataObject_Npc newNpcNetworkData = m_npcSpawners[spawnerId].SpawnNpc().m_networkDataObjectNpc;
+            newNpcNetworkData?.PutAllData(data); // If the spawner is already at max count, it will return null
+            return newNpcNetworkData;
+        }
+        return null;
+    }
 
 }

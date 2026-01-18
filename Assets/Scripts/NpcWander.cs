@@ -20,6 +20,7 @@ public class NpcWander : MonoBehaviour
     [SerializeField] string m_runAnimationName;
     [SerializeField] string m_idleAnimationName;
     [SerializeField] Animator m_animator;
+    float m_positionDeltaThreshold = 0f;
     public enum NPC_STATE { IDLE, MOVING, DESTROYED }
     [SerializeField] NPC_STATE m_state = NPC_STATE.IDLE;
     private IEnumerator m_wanderCoroutine;
@@ -125,7 +126,6 @@ public class NpcWander : MonoBehaviour
 
     public void OnCollisionEnter2D(Collision2D collision)
     {
-        Debug.Log("NpcWander: Collision detected, changing direction.");
         ChangeToRandomDirection();
         CorrectFacing();
     }
@@ -139,13 +139,12 @@ public class NpcWander : MonoBehaviour
 
     public void UpdateTransformValues(List<float?> possibleValues)
     {
-        if (possibleValues[0] != null || possibleValues[1] != null)
-        {
-            Vector3 newPosition = transform.localPosition;
-            if (possibleValues[0] != null) newPosition.x = (float)possibleValues[0];
-            if (possibleValues[1] != null) newPosition.y = (float)possibleValues[1];
-            transform.localPosition = newPosition;
-        }
+        Vector3 position = transform.localPosition;
+        if (possibleValues[0] != null) position.x = (float)possibleValues[0];
+        if (possibleValues[1] != null) position.y = (float)possibleValues[1];
+        float positionDelta = Vector2.Distance(position, transform.localPosition);
+        if (positionDelta >= m_positionDeltaThreshold)
+            transform.localPosition = position;
 
         if (possibleValues[2] != null)
         {

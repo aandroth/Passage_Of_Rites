@@ -75,7 +75,7 @@ MonoBehaviour:
   m_isMoving: 0
   m_nonPlayerMovement: 32
   m_circleCollider: {fileID: 8946554184718114416}
-  m_positionDeltaThreshold: 10
+  m_positionDeltaThreshold: 0
   m_state: 0
   m_playerIsControllable: 0
   m_playerSupplyItem: {fileID: 8142477442602346506}

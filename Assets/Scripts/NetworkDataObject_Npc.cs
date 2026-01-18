@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using static NpcWander;
+using static UnityEngine.RuleTile.TilingRuleOutput;
 
 public class NetworkDataObject_Npc
 {
@@ -29,6 +30,8 @@ public class NetworkDataObject_Npc
     public delegate void PlayerBecameGameOwnerDelegate();
     public PlayerBecameGameOwnerDelegate m_playerBecameGameOwner;
 
+    public float positionChangeThreshhold = 10f;
+
     public void Start()
     {
         m_prevData.m_prevTransformData = new List<float>();
@@ -44,8 +47,8 @@ public class NetworkDataObject_Npc
     {
         //"position_X, position_Y, transform.localScale_X, state";
         //          0,          1,                      2,     3
-        List<float> currValues = m_getCurrentValues();
 
+        List<float> currValues = m_getCurrentValues();
         /*2*/ m_prevData.m_prevTransformData[0] = currValues[0];
         /*3*/ m_prevData.m_prevTransformData[1] = currValues[1];
         /*4*/ m_prevData.m_prevTransformData[2] = currValues[2];
@@ -56,16 +59,15 @@ public class NetworkDataObject_Npc
         //"position_X, position_Y, transform.localScale_X, state";
         //          0,          1,                      2,     3
         List<float> currValues = m_getCurrentValues();
+        int id = m_getId();
 
         //"Action, id, spawnerId, NpcType, position_X, position_Y, transform.localScale_X, state";
         //      0,  1,         2,       3,          4,          5,                      6,     7
-        /*0,1,*/
-        int id = m_getId();
-        string changedData = $",{id},,";
-        /*2,  */ changedData += m_prevData.m_prevTransformData[0] != currValues[0]      ? $"{currValues[0]}," : ",";
-        /*3,  */ changedData += m_prevData.m_prevTransformData[1] != currValues[1]      ? $"{currValues[1]}," : ",";
-        /*4,  */ changedData += m_prevData.m_prevTransformData[2] != currValues[2]      ? $"{currValues[2]}," : ",";
-        /*5,  */ changedData += m_prevData.m_state                != (int)currValues[3] ? $"{currValues[3]}" : "";
+        /*0,1,2,3,*/ string changedData = $",{id},,,";
+        /*4,  */ changedData += m_prevData.m_prevTransformData[0] != currValues[0]      ? $"{currValues[0]}," : ",";
+        /*5,  */ changedData += m_prevData.m_prevTransformData[1] != currValues[1]      ? $"{currValues[1]}," : ",";
+        /*6,  */ changedData += m_prevData.m_prevTransformData[2] != currValues[2]      ? $"{currValues[2]}," : ",";
+        /*7,  */ changedData += m_prevData.m_state                != (int)currValues[3] ? $"{currValues[3]}" : "";
         if (changedData == $",{id},,,,,,")
         {
             return "Unchanged";
@@ -79,21 +81,25 @@ public class NetworkDataObject_Npc
         Debug.Log("Using m_getCurrentValues");
         List<float> currValues = m_getAllCurrentValues();
 
-        //"Action, id, spawnerId, NpcType, position_X, position_Y, transform.localScale_X, state";
-        //      0,  1,         2,       3,          4,          5,                      6,     7
-        /*0,1,*/ string allData = $",{currValues[0]},{currValues[1]},{currValues[2]},";
-        /*3,  */ allData += $"{currValues[3]},";
-        /*4,  */ allData += $"{currValues[4]},";
-        /*5,  */ allData += $"{currValues[5]},";
-        /*5,  */ allData += $"{currValues[6]},";
-        /*6,  */ allData += $"{currValues[7]}";
+        //"id, spawnerId, NpcType, position_X, position_Y, transform.localScale_X, state";
+        //  1,         2,       3,          4,          5,                      6,     7
+        /*0,1,2,3*/ string allData = $",{currValues[0]},{currValues[1]},{currValues[2]},";
+        /*4,  */ allData += $"{currValues[3]},";
+        /*5,  */ allData += $"{currValues[4]},";
+        /*6,  */ allData += $"{currValues[5]},";
+        /*7,  */ allData += $"{currValues[6]}";
         return allData;
     }
 
     public void PutChangedData(string[] changedDataList)
     {
+        // changedDataList
         //"Action, id, spawnerId, NpcType, position_X, position_Y, transform.localScale_X, state";
         //      0,  1,         2,       3,          4,          5,                      6,     7
+
+        // possibleTransformChanges
+        //"position_X, position_Y, transform.localScale_X";
+        //          0,          1,                      2
 
         List<float?> possibleTransformChanges = new List<float?>() { null, null, null };
         if (changedDataList[4] != "") possibleTransformChanges[0] = float.Parse(changedDataList[4]);
@@ -106,8 +112,9 @@ public class NetworkDataObject_Npc
 
     public void PutAllData(string[] fullDataList)
     {
-        //"Action, id, NpcType, position_X, position_Y, transform.localScale_X, state";
-        //      0,  1,       2,          3,          4,                      5,     6
+        // fullDataList
+        //"Action, id, spawnerId, NpcType, position_X, position_Y, transform.localScale_X, state";
+        //      0,  1,         2,       3,          4,          5,                      6,     7
 
         m_setIdSpawnerIdAndNpcType(int.Parse(fullDataList[1]), int.Parse(fullDataList[2]), int.Parse(fullDataList[3]));
 

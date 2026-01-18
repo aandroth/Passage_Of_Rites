@@ -18,7 +18,6 @@ public class TitleSceneController : Game
     [SerializeField] List<GameObject> m_ipButtonsList = new List<GameObject>();
     [SerializeField] UnityEngine.UI.Button m_startGameButton = null;
     [SerializeField] TMP_InputField m_playerNameInputField = null;
-    [SerializeField] int m_firstLevel = 2;
 
     public void Start()
     {
@@ -84,7 +83,8 @@ public class TitleSceneController : Game
             await m_backend.RequestServerToChangeName(m_playerNameInputField.text);
         }
 
-        m_backend.RequestServerToLoadLevel(m_firstLevel);
+        await m_backend.RequestServerToSetInterval();
+        m_backend.RequestServerToLoadLevel(m_nextLevelIndex);
     }
 
     public void ParseServerList(string[] serverListResult)
@@ -109,7 +109,7 @@ public class TitleSceneController : Game
         }
         for (int i = 0; i < servers.Length; ++i)
         {
-            GameObject newButton = Instantiate(m_buttonPrefab, m_buttonParent.transform);
+            GameObject newButton = Instantiate(m_buttonPrefab, m_buttonParent?.transform);
             newButton.GetComponent<IpButton>().AssignButtonParameters(servers[i], m_ipAddressText, m_backend.SetServerUrl);
             m_ipButtonsList.Add(newButton);
         }
