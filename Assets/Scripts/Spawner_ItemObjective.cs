@@ -13,7 +13,7 @@ public class Spawner_ItemObjective : Spawner
         //m_requestServerSpawn();
     }
 
-    public override void DespawnAndSendToServer(int id)
+    public override void DestroyAndSendToServer(int id)
     {
         //m_requestServerSpawn();
     }

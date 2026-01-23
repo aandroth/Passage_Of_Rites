@@ -17,12 +17,16 @@ public abstract class Spawner : MonoBehaviour
 
     public delegate void RequestServerSpawnDelegate(NetworkDataObject_Npc dataObj);
     public RequestServerSpawnDelegate m_requestServerSpawn;
-    public delegate void RequestServerDespawnDelegate(int npcId);
-    public RequestServerDespawnDelegate m_requestServerDespawn;
+    public delegate void RemoveFromGameControllerDelegate(int npcId);
+    public RemoveFromGameControllerDelegate m_removeFromGameController;
+    public delegate void NpcDestroyedDelegate(int npcId);
+    public NpcDestroyedDelegate m_npcDestroyed;
     public delegate bool SpawnCommandFromServerDelegate();
     public SpawnCommandFromServerDelegate m_spawnCommandFromServer;
-    public delegate bool IsServerOwnerDelegate();
-    public IsServerOwnerDelegate m_isServerOwner;
+    public delegate bool IsGameOwnerDelegate();
+    public IsGameOwnerDelegate m_isGameOwner;
+    public delegate void ReportItemCompletedDelegate();
+    public ReportItemCompletedDelegate m_reportItemCompleted;
 
     public void Start()
     {
@@ -36,6 +40,7 @@ public abstract class Spawner : MonoBehaviour
     {
         while (true)
         {
+            Debug.Log($"SpawnSequenceCoroutine running");
             yield return new WaitForSeconds(Random.Range(m_waitTimeMin, m_waitTimeMax) - m_delaySpawnTime); // Adjust spawn interval as needed
             // Spawner animation/effect can be triggered here
             yield return new WaitForSeconds(m_delaySpawnTime); // Adjust spawn interval as needed
@@ -44,7 +49,7 @@ public abstract class Spawner : MonoBehaviour
     }
 
     public abstract void SpawnAndSendToServer();
-    public abstract void DespawnAndSendToServer(int id);
+    public abstract void DestroyAndSendToServer(int id);
 
     public T SpawnObject<T>()
     {
@@ -52,12 +57,4 @@ public abstract class Spawner : MonoBehaviour
         T newObject = Instantiate(m_spawnPrefab, spawnPosition, Quaternion.identity).GetComponent<T>();
         return newObject;
     }
-
-    //public T SpawnObjectNetworkData<T>()
-    //{
-    //    NetworkDataObject_Npc newNpc = new NetworkDataObject_Npc();
-        
-    //    T newObject = Instantiate(m_spawnPrefab, spawnPosition, Quaternion.identity).GetComponent<T>();
-    //    return newObject;
-    //}
 }

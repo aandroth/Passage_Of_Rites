@@ -126,7 +126,7 @@ public class TitleSceneController : Game
 
     public void BecomeGameOwner(bool becameOwner = true)
     {
-        m_startGameButton?.gameObject.SetActive(becameOwner);
+        m_startGameButton?.gameObject?.SetActive(becameOwner);
     }
 
     public override bool GameIsMiniGame()

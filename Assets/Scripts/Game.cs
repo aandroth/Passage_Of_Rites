@@ -5,6 +5,7 @@ using UnityEngine;
 
 public abstract class Game : MonoBehaviour
 {
+    protected PlayerControls m_playerControls;
     [SerializeField] public bool m_skipIntro = false;
     public int m_nextLevelIndex = 0;
     public float m_gameCountdownTime = 120.0f;
@@ -17,6 +18,8 @@ public abstract class Game : MonoBehaviour
 
     public delegate void GetPlayerNameAndPointsFromGameController(int idx);
     public GetPlayerNameAndPointsFromGameController m_getPlayerNameAndPointsFromGameController;
+    public delegate bool IsGameOwnerDelegate();
+    public IsGameOwnerDelegate m_isGameOwner;
 
     public delegate void UpdatMainPlayerPoints(int idx);
     public UpdatMainPlayerPoints m_updateMainPlayerPoints;
@@ -33,6 +36,9 @@ public abstract class Game : MonoBehaviour
     public delegate void RequestServerPutChangedDataNpcDelegate(NetworkDataObject_Npc n);
     public RequestServerPutChangedDataNpcDelegate m_requestServerPutAllDataNpc;
 
+    public delegate void SetSpawnerRequestDelegatesAndIndexesNpcDelegate(ref Spawner s);
+    public SetSpawnerRequestDelegatesAndIndexesNpcDelegate m_setSpawnerRequestDelegatesAndIndexesNpc;
+
     //[SerializeField] List<>
 
     public struct PlayerInfo 
@@ -42,7 +48,7 @@ public abstract class Game : MonoBehaviour
         public string titles;
         public int points;
     }
-    public virtual void SetSpawnerRequestDelegatesAndIndexes(RequestServerSpawnNpcDelegate Spawn, Action<int> Despawn, Func<bool> IsOwner) { }
+    public virtual void SetNpcSpawnerRequestDelegates(RequestServerSpawnNpcDelegate Spawn, Action<int> Despawn, Func<bool> IsOwner) { }
     public virtual void NpcSpawn(RequestServerSpawnNpcDelegate n) { }
     public virtual void StartGameIntro(SignalReadinessDelegate signalGameControllerReady = null) {  }
     public virtual void StartGameOutro(SignalReadinessDelegate signalGameControllerReady = null) { }

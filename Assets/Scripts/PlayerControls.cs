@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static ItemObjectiveData;
+using static OtherPlayerSupplyItem;
 
 public class PlayerControls : MonoBehaviour
 {
@@ -55,7 +56,7 @@ public class PlayerControls : MonoBehaviour
         m_prevState = (int)m_state;
         m_prevTitles = m_titles;
         m_prevPoints = m_points;
-        Debug.Log(m_state);
+        //Debug.Log(m_state);
     }
 
     // Update is called once per frame
@@ -123,6 +124,7 @@ public class PlayerControls : MonoBehaviour
             m_isMainPlayer = false;
             m_accessibleSupplyItem = m_otherPlayerSupplyItem;
             m_playerSupplyItem.gameObject.SetActive(false);
+            m_otherPlayerSupplyItem.m_playerControlsDazedCallback = Dazed;
         }
     }
 
@@ -365,7 +367,7 @@ public class PlayerControls : MonoBehaviour
 
     private void PlayIdleCycle()
     {
-        if (m_animatorBody != null && !m_animatorBody.GetCurrentAnimatorStateInfo(0).IsName(m_walkCycleName))
+        if (m_animatorBody != null && !m_animatorBody.GetCurrentAnimatorStateInfo(0).IsName(m_idleCycleName))
             m_animatorBody.Play(m_idleCycleName);
     }
 }

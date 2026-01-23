@@ -11,10 +11,16 @@ public class ItemObjective_Reuse : ItemObjective
     public delegate void ReportItemCompleted();
     public ReportItemCompleted m_reportItemCompleted;
 
+    public enum ITEM_STATE { NONE, PICKED_UP, DROPPED, COMPLETED, DESTROYED }
 
     public void Start()
     {
         m_neededSupplyItemsMasterList = new List<SupplyItemName>(m_neededSupplyItems);
+    }
+
+    public void SetDestroySelfUponCompletion(bool b)
+    {
+        m_destroySelfOnCompletion = b;
     }
 
     public override SupplyItemName Interact(SupplyItemName supplyHeld, List<SupplyItemName> suppliesNeeded = null)

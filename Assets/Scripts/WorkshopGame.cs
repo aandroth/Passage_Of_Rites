@@ -17,26 +17,22 @@ public class WorkshopGame : Game
     public int m_playerStationIdx = 0;
 
     [SerializeField] ItemObjective_Trap m_playerStation_ItemObjectiveTrap;
-    public List<Transform> m_playerSpawnLocations;
-    public static List<Transform> m_playerTableLocations;
-    [SerializeField] public List<TMP_Text> m_playerNameTexts;
-    [SerializeField] public List<TMP_Text> m_playerScoreTexts;
+    [SerializeField] List<Transform> m_playerSpawnLocations;
+    [SerializeField] static List<Transform> m_playerTableLocations;
+    [SerializeField] List<TMP_Text> m_playerNameTexts;
+    [SerializeField] List<TMP_Text> m_playerScoreTexts;
 
     [SerializeField] private TMP_Text m_mainPlayerScoreText;
 
-    [SerializeField] private float m_gameInitDelay = 0;
-    [SerializeField] private float m_holdOnWinnersDelay = 0;
-    [SerializeField] private MinigameTitleCard m_gameTitleCard;
-    [SerializeField] private BlackoutPanel m_blackoutCard;
-    [SerializeField] private TimeDisplayed m_timeDisplayed;
-    [SerializeField] private ThreeTwoOneGo_Countdown m_threeTwoOneGoCountdown;
+    [SerializeField] float m_gameInitDelay = 0;
+    [SerializeField] float m_holdOnWinnersDelay = 0;
+    [SerializeField] MinigameTitleCard m_gameTitleCard;
+    [SerializeField] BlackoutPanel m_blackoutCard;
+    [SerializeField] TimeDisplayed m_timeDisplayed;
+    [SerializeField] ThreeTwoOneGo_Countdown m_threeTwoOneGoCountdown;
 
-
-    public List<Sprite> m_trapSprites = new List<Sprite>();
-    public List<Sprite> m_supplySprites = new List<Sprite>();
     private IEnumerator m_countdownCoroutine;
 
-    private PlayerControls m_playerControls;
     [SerializeField] private float m_endGameHornHoldTime;
     [SerializeField] private float m_endGameScoresHoldTime;
     [SerializeField] private int m_pointsPerCompletedTrap = 10;
@@ -247,17 +243,17 @@ public class WorkshopGame : Game
         UpdateMainPlayerPoints();
     }
 
+    public void UpdateMainPlayerPoints()
+    {
+        m_playerControls.m_points += m_pointsPerCompletedTrap;
+        m_mainPlayerScoreText.text = $"{m_playerControls.m_points} Points";
+    }
+
     public void AssignTrapToPlayerAndStation()
     {
         TrapType t = m_playerStation_ItemObjectiveTrap.AssignTrapToComplete();
         m_playerControls.AssignNeededSuppliesToPlayerSupplyItem(ItemObjective_Trap.m_trapTypeToSupplyItemDict[t].ToList());
 
-    }
-
-    public void UpdateMainPlayerPoints()
-    {
-        m_playerControls.m_points += m_pointsPerCompletedTrap;
-        m_mainPlayerScoreText.text = $"{m_playerControls.m_points} Points";
     }
 
     public override void UpdateOtherPlayerPoints(int playerIndex, int points)

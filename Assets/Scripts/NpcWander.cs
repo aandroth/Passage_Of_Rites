@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Unity.VisualScripting;
 using UnityEngine;
 using static ItemObjective;
@@ -20,6 +21,7 @@ public class NpcWander : MonoBehaviour
     [SerializeField] string m_runAnimationName;
     [SerializeField] string m_idleAnimationName;
     [SerializeField] Animator m_animator;
+    [SerializeField] ItemObjective_Reuse m_npcItem = null;
     float m_positionDeltaThreshold = 0f;
     public enum NPC_STATE { IDLE, MOVING, DESTROYED }
     [SerializeField] NPC_STATE m_state = NPC_STATE.IDLE;
@@ -28,8 +30,26 @@ public class NpcWander : MonoBehaviour
     [SerializeField] public NetworkDataObject_Npc m_networkDataObjectNpc { get; private set; } = new NetworkDataObject_Npc();
 
 
+    public delegate void ReportItemCompletedDelegate();
+    public ReportItemCompletedDelegate m_reportItemCompleted;
     public delegate void OnDestroyDelegate(int id);
-    public OnDestroyDelegate m_onDestroyDelegate;
+    public OnDestroyDelegate m_onDestroy;
+
+
+    public void Start()
+    {
+        if (m_npcItem != null)
+        {
+            m_npcItem.SetDestroySelfUponCompletion(false);
+            m_npcItem.m_reportItemCompleted = NpcItemWasCompleted;
+        }
+    }
+
+    public void NpcItemWasCompleted()
+    {
+        m_reportItemCompleted?.Invoke();
+        Destroy(gameObject);
+    }
 
     public void FillNetworkDataObjectDelegates()
     {
@@ -38,6 +58,7 @@ public class NpcWander : MonoBehaviour
         m_networkDataObjectNpc.m_setIdSpawnerIdAndNpcType = SetIdSpawnerIdAndNpcType;
         m_networkDataObjectNpc.m_getCurrentValues = GetCurrentValues;
         m_networkDataObjectNpc.m_getAllCurrentValues = GetAllCurrentValues;
+        m_networkDataObjectNpc.m_getCurrentState = () => { return m_state; };
         m_networkDataObjectNpc.m_updateTransform = UpdateTransformValues;
         m_networkDataObjectNpc.m_updateState = UpdateState;
         m_networkDataObjectNpc.m_playerBecameGameOwner = StartWandering;
@@ -154,14 +175,19 @@ public class NpcWander : MonoBehaviour
         }
     }
 
-    public void UpdateState(int state)
+    public void UpdateState(int newState)
     {
-        NPC_STATE newState = (NPC_STATE)state;
-        if (newState == NPC_STATE.DESTROYED)
+        Debug.Log($"UpdateState: {newState}, {(NPC_STATE)newState}");
+        NPC_STATE oldState = m_state;
+        m_state = (NPC_STATE)newState;
+        if (m_state == NPC_STATE.DESTROYED && oldState != NPC_STATE.DESTROYED)
+        {
+            Debug.Log("State update to DESTROYED. Destroying npc");
             Destroy(gameObject);
-        else if(newState == NPC_STATE.MOVING && m_state != NPC_STATE.MOVING)
+        }
+        else if (m_state == NPC_STATE.MOVING && oldState != NPC_STATE.MOVING)
             PlayMovingCycle();
-        else if(newState == NPC_STATE.IDLE && m_state != NPC_STATE.IDLE)
+        else if (m_state == NPC_STATE.IDLE && oldState != NPC_STATE.IDLE)
             PlayIdleCycle();
     }
 
@@ -190,6 +216,6 @@ public class NpcWander : MonoBehaviour
     }
     public void OnDestroy()
     {
-        m_onDestroyDelegate?.Invoke(m_id);
+        m_onDestroy?.Invoke(m_id);
     }
 }

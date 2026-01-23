@@ -87,11 +87,11 @@ MonoBehaviour:
   m_isHighlightable: 1
   m_playerInRange: 0
   m_highlightSprite: {fileID: 1442527614280478999}
+  m_idOfOwningNpc: -1
   m_suppliesNeededIcons: []
   m_neededSupplyItems: 00000000
   m_supplyItemOnInteraction: 0
   m_supplyItemOnCompletion: 8
-  m_checkmarkSprite: {fileID: 0}
   m_neededSupplyItemsMasterList: 
   m_destroySelfOnCompletion: 1
 --- !u!114 &2532988999630754396
@@ -116,6 +116,7 @@ MonoBehaviour:
   m_runAnimationName: Run
   m_idleAnimationName: Idle
   m_animator: {fileID: 2235472894921342437}
+  m_npcItem: {fileID: 8151283673297584036}
   m_state: 0
 --- !u!95 &2235472894921342437
 Animator:

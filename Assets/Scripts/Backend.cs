@@ -100,11 +100,10 @@ public class Backend : MonoBehaviour
 
         m_webSocket.OnMessage += (bytes) =>
         {
-            Debug.Log("OnMessage!");
-
             // getting the message as a string
             var message = System.Text.Encoding.UTF8.GetString(bytes);
-            Debug.Log("OnMessage! " + message);
+            if(!message.Contains("Ping"))
+                Debug.Log("OnMessage! " + message);
             ReceivedMessage(message);
         };
 
@@ -204,7 +203,7 @@ public class Backend : MonoBehaviour
     {
         string pingRequest = $"Ping";
         var bytes = System.Text.Encoding.UTF8.GetBytes(pingRequest);
-        m_webSocket.Send(bytes);
+        m_webSocket?.Send(bytes);
     }
     public System.Threading.Tasks.Task RequestServerToChangeName(string name)
     {
@@ -230,7 +229,7 @@ public class Backend : MonoBehaviour
             string setIntervalRequest = $"Set_Interval,{GetIdFromGameController()},{this.m_intervalTime}";
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(setIntervalRequest);
-            m_webSocket.Send(bytes);
+            m_webSocket?.Send(bytes);
             Debug.Log($"setIntervalRequest finished");
         }
 
@@ -243,7 +242,7 @@ public class Backend : MonoBehaviour
             string loadLevelRequest = $"Load_Level,{levelIdx}";
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(loadLevelRequest);
-            m_webSocket.Send(bytes);
+            m_webSocket?.Send(bytes);
             Debug.Log($"Request finished");
         }
     }
@@ -254,7 +253,7 @@ public class Backend : MonoBehaviour
             string startCountdownRequest = $"Start_Countdown,{levelCountdownTime}";
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(startCountdownRequest);
-            m_webSocket.Send(bytes);
+            m_webSocket?.Send(bytes);
             Debug.Log($"Request finished");
         }
     }
@@ -267,7 +266,7 @@ public class Backend : MonoBehaviour
             string readyToServer = $"Player_Ready,";
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(readyToServer);
-            m_webSocket.Send(bytes);
+            m_webSocket?.Send(bytes);
             Debug.Log($"Request finished");
         }
     }
@@ -280,7 +279,7 @@ public class Backend : MonoBehaviour
             string startGameRequest = $"Start_Game,";
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(startGameRequest);
-            m_webSocket.Send(bytes);
+            m_webSocket?.Send(bytes);
             Debug.Log($"Request finished");
         }
     }
@@ -301,7 +300,7 @@ public class Backend : MonoBehaviour
             string startGameRequest = $"Kill_Game,";
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(startGameRequest);
-            m_webSocket.Send(bytes);
+            m_webSocket?.Send(bytes);
             Debug.Log($"Request finished");
         }
 
@@ -372,7 +371,7 @@ public class Backend : MonoBehaviour
             changes = $"Update_Player{changes}";
             Debug.Log($"Sending: {changes}");
             var bytes = System.Text.Encoding.UTF8.GetBytes(changes);
-            m_webSocket.Send(bytes);
+            m_webSocket?.Send(bytes);
             SetPlayerChangedDataToCurrentValues();
         }
     }
@@ -386,7 +385,7 @@ public class Backend : MonoBehaviour
             Debug.Log($"Sending: {changes}");
             var bytes = System.Text.Encoding.UTF8.GetBytes(changes);
             m_webSocket.Send(bytes);
-            npcData.SetChangedDataToCurrentValues();
+            npcData?.SetChangedDataToCurrentValues();
         }
     }
 
@@ -396,7 +395,7 @@ public class Backend : MonoBehaviour
         string dataAsString = $"Spawn_Npc{data}";
         Debug.Log($"Sending: {dataAsString}");
         var bytes = System.Text.Encoding.UTF8.GetBytes(dataAsString);
-        m_webSocket.Send(bytes);
+        m_webSocket?.Send(bytes);
     }
 
     public void SendNpcDespawnData(int id)
@@ -404,7 +403,7 @@ public class Backend : MonoBehaviour
         string dataAsString = $"Despawn_Npc{id}";
         Debug.Log($"Sending: {dataAsString}");
         var bytes = System.Text.Encoding.UTF8.GetBytes(dataAsString);
-        m_webSocket.Send(bytes);
+        m_webSocket?.Send(bytes);
     }
 
     public void SendItemObjectiveChangedData()
@@ -415,7 +414,7 @@ public class Backend : MonoBehaviour
             changes = $"Update_ItemObjective{changes}";
             Debug.Log($"Sending: {changes}");
             var bytes = System.Text.Encoding.UTF8.GetBytes(changes);
-            m_webSocket.Send(bytes);
+            m_webSocket?.Send(bytes);
             SetItemObjectiveChangedDataToCurrentValues();
         }
     }
@@ -454,9 +453,9 @@ public class Backend : MonoBehaviour
     {
         if (this == Instance)
         {
-            if (this.m_webSocket != null && this.m_connected)
+            if (this?.m_webSocket != null && this.m_connected)
             {
-                m_webSocket.CancelConnection();
+                m_webSocket?.CancelConnection();
             }
             m_connected = false;
             SendServerDataToGameController("", "Make_Owner", new string[] { "", "-1", "f" }); // Stop being a Game Owner
@@ -480,7 +479,8 @@ public class Backend : MonoBehaviour
         string data = raw_data.Substring(1, raw_data.Length - 2);
         string[] playerData = data.Split(',');
         string action = playerData.Length > 0 ? playerData[0] : "Disconnect";
-        Debug.Log($"Received: {data} with action {action}");
+        if (!action.Contains("Ping"))
+            Debug.Log($"Received: {data} with action {action}");
 
         switch (action)
         {

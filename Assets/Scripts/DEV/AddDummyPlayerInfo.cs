@@ -13,7 +13,7 @@ public class AddDummyPlayerInfo : MonoBehaviour
         GameObject p1 = GameObject.Instantiate(m_playerPrefab, Vector3.zero, Quaternion.identity);
         p1.GetComponent<PlayerControls>().m_id = 1;
         p1.GetComponent<PlayerControls>().m_isMainPlayer = false;
-        p1.GetComponent<PlayerControls>().m_nameTextMesh.text = "Bob";
+        p1.GetComponent<PlayerControls>().m_nameTextMesh.text = "Bobberino";
         p1.GetComponent<PlayerControls>().m_titles = "Wise Mage";
         p1.GetComponent<PlayerControls>().m_points = 200;
         m_endingSceneController.AssignPlayer(p1.GetComponent<PlayerControls>(), 1);

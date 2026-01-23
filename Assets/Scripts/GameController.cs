@@ -9,7 +9,7 @@ using static NpcTypeData;
 
 public class GameController : MonoBehaviour
 {
-    [SerializeField] bool m_skipGameIntros = false;
+    [SerializeField] bool m_skipGameIntros = false, m_autoStartIntro = true;
     public float m_pullChangedDataInterval;
     public Dictionary<int, PlayerControls> m_playersDict = new Dictionary<int, PlayerControls>();
     public Dictionary<int, NetworkDataObject_Npc> m_npcsDict = new Dictionary<int, NetworkDataObject_Npc>();
@@ -70,7 +70,7 @@ public class GameController : MonoBehaviour
     {
         if (m_playersDict.ContainsKey(id) && m_mainPlayerId != id)
         {
-            Debug.Log($"Player {id} is in dict, Updating..."); 
+            //Debug.Log($"Player {id} is in dict, Updating..."); 
             m_playersDict[int.Parse(playerData[1])].PutChangedData(playerData);
         }
         else
@@ -79,7 +79,7 @@ public class GameController : MonoBehaviour
 
     public void UpdateNpc(int id, string[] npcData)
     {
-        if (m_npcsDict.ContainsKey(id) && !m_isGameOwner)
+        if (m_npcsDict.ContainsKey(id))
             m_npcsDict[int.Parse(npcData[1])].PutChangedData(npcData);
     }
 
@@ -132,9 +132,16 @@ public class GameController : MonoBehaviour
 
     public void DespawnNpc(int npcId)
     {
+        Debug.Log($"DespawnNpc called on {npcId}");
         if (!m_npcsDict.ContainsKey(npcId))
             return;
 
+        if (m_npcsDict[npcId].m_getCurrentState() != NpcWander.NPC_STATE.DESTROYED)
+        {
+            Debug.Log($"{npcId} was not marked as Destroyed, so this should be a result of this player destroying it");
+            m_npcsDict[npcId].MarkAsDestroyed();
+            m_backend.SendNpcChangedData(m_npcsDict[npcId]);
+        }
         m_npcsDict.Remove(npcId);
     }
 
@@ -143,7 +150,7 @@ public class GameController : MonoBehaviour
 
     }
 
-    public void BecomeGameOwner(bool becameOwner = true)
+    public void GameOwnershipChangedTo(bool becameOwner = true)
     {
         Debug.Log($"Ownership is now marked as {becameOwner}");
 
@@ -195,12 +202,28 @@ public class GameController : MonoBehaviour
                 }
                 else if(scene.name != m_endSceneName)
                 {
-                    m_game.SetSpawnerRequestDelegatesAndIndexes(SpawnNpcFromSpawner, 
-                                                                DespawnNpc, 
-                                                                () => { return m_isGameOwner; });
+                    m_game.SetNpcSpawnerRequestDelegates(SpawnNpcFromSpawner,
+                                                                   DespawnNpc,
+                                                                   () => { return m_isGameOwner; });
                 }
+                //if (m_autoStartIntro) // For testing games within their scene
+                //{
+                //    PlayerControls pc = GameObject.Instantiate(m_playerPrefab, Vector3.zero, Quaternion.identity).GetComponent<PlayerControls>();
+                //    pc.m_isMainPlayer = true;
+                //    m_game.AssignPlayer(pc, 0, true);
+                //    m_game.StartGameIntro();
+                //}
             }
         }
+    }
+
+    private void SetSpawnerRequestDelegatesAndIndexes(ref Spawner spawner)
+    {
+        if(spawner == null) return;
+
+        spawner.m_requestServerSpawn = SpawnNpcFromSpawner;
+        spawner.m_removeFromGameController = DespawnNpc;
+        spawner.m_isGameOwner = () => { return m_isGameOwner; };
     }
 
     public void DestroyPlayer()
@@ -268,7 +291,7 @@ public class GameController : MonoBehaviour
                 break;
             case "Make_Owner":
                 if(serverData.Length >= 3)
-                    BecomeGameOwner(serverData[2] == "t" ? true : false);
+                    GameOwnershipChangedTo(serverData[2] == "t" ? true : false);
                 break;
             case "Load_Level":
                 if (serverData.Length >= 2)

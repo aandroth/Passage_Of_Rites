@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using static NpcWander;
-using static UnityEngine.RuleTile.TilingRuleOutput;
 
 public class NetworkDataObject_Npc
 {
@@ -27,6 +26,8 @@ public class NetworkDataObject_Npc
     public GetCurrentValuesDelegate m_getCurrentValues;
     public delegate List<float> GetAllCurrentValuesDelegate();
     public GetAllCurrentValuesDelegate m_getAllCurrentValues;
+    public delegate NPC_STATE GetCurrentStateDelegate();
+    public GetCurrentStateDelegate m_getCurrentState;
     public delegate void PlayerBecameGameOwnerDelegate();
     public PlayerBecameGameOwnerDelegate m_playerBecameGameOwner;
 
@@ -125,5 +126,11 @@ public class NetworkDataObject_Npc
         m_updateTransform(transformValues);
 
         m_updateState(int.Parse(fullDataList[7]));
+    }
+
+    public void MarkAsDestroyed()
+    {
+        SetChangedDataToCurrentValues();
+        m_updateState((int)NpcWander.NPC_STATE.DESTROYED);
     }
 }

@@ -744,11 +744,11 @@ MonoBehaviour:
   m_isHighlightable: 1
   m_playerInRange: 0
   m_highlightSprite: {fileID: 0}
+  m_idOfOwningNpc: -1
   m_suppliesNeededIcons: []
   m_neededSupplyItems: 08000000
   m_supplyItemOnInteraction: 0
   m_supplyItemOnCompletion: 0
-  m_checkmarkSprite: {fileID: 0}
   m_neededSupplyItemsMasterList: 
   m_destroySelfOnCompletion: 0
 --- !u!61 &13694562215784605

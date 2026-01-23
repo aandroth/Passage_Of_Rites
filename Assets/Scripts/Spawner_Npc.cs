@@ -28,10 +28,10 @@ public class Spawner_Npc : Spawner
         NpcWander newNpc = SpawnObject<NpcWander>();
         newNpc.FillNetworkDataObjectDelegates();
         newNpc.SetIdSpawnerIdAndNpcType(newNpc.gameObject.GetInstanceID(), m_index, (int)m_npcType);
-        newNpc.m_onDestroyDelegate = DespawnAndSendToServer;
+        newNpc.m_onDestroy = DestroyAndSendToServer;
         ++m_spawnCount;
 
-        if (m_isServerOwner != null && m_isServerOwner())
+        if (m_isGameOwner != null && m_isGameOwner())
         {
             if (m_spawnCount >= m_spawnLimit && m_spawnCoroutine != null)
             {
@@ -42,24 +42,39 @@ public class Spawner_Npc : Spawner
         return newNpc;
     }
 
+
+    public void SetNpcItemDelegates(NpcWander npc)
+    {
+        if(npc.m_hasItem)
+        {
+            //ItemObjective_Reuse item = ItemObjectiveData_Reuse.Instance.GetItemObjectiveByNpcType(npc.m_npcType);
+            //if (item != null)
+            //{
+            //    npc.m_npcItem = item;
+            //    npc.m_npcItem.m_onPickedUp = npc.StopWandering;
+            //    npc.m_npcItem.m_onDropped = npc.StartWandering;
+            //}
+        }
+    }
+
     public void SendNetworkDataObjectToServer(NetworkDataObject_Npc n)
     {
         Debug.Log("SendSpawnRequest");
         m_requestServerSpawn(n);
     }
 
-    public override void DespawnAndSendToServer(int npcId)
+    public override void DestroyAndSendToServer(int npcId)
     {
         Debug.Log("SendDespawnRequest");
         --m_spawnCount;
 
-        if (m_isServerOwner != null && m_isServerOwner())
+        if (m_isGameOwner != null && m_isGameOwner())
         {
             if (m_spawnCount < m_spawnLimit && m_spawnCoroutine != null)
                 StartCoroutine(m_spawnCoroutine);
         }
 
-        m_requestServerDespawn(npcId);
+        m_removeFromGameController(npcId);
     }
 
     public void ReceiveSpawnCommand(INetworkDataObject n)

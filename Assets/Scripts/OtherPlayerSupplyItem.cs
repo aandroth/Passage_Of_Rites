@@ -13,7 +13,7 @@ public class OtherPlayerSupplyItem : Interactable, IAccessibleSupplyItem
     public float m_minMouseDistanceToCenter = 2f;
     public float m_minPlayerDistanceToCenter = 2f;
 
-    public delegate void PlayerControlsDazedCallback();
+    public delegate void PlayerControlsDazedCallback(float f = 1f);
     public PlayerControlsDazedCallback m_playerControlsDazedCallback;
 
 

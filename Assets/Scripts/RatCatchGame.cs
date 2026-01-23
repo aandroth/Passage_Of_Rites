@@ -6,53 +6,50 @@ using UnityEngine;
 
 public class RatCatchGame : Game
 {
-    [SerializeField] private TMP_Text m_mainPlayerScoreText;
-    [SerializeField] private float m_gameInitDelay = 0;
-    [SerializeField] private float m_holdOnWinnersDelay = 0;
-    [SerializeField] private MinigameTitleCard m_gameTitleCard;
-    [SerializeField] private BlackoutPanel m_blackoutCard;
-    [SerializeField] private TimeDisplayed m_timeDisplayed;
-    [SerializeField] private ThreeTwoOneGo_Countdown m_threeTwoOneGoCountdown;
+    [SerializeField] TMP_Text m_mainPlayerScoreText;
+    [SerializeField] float m_gameInitDelay = 0;
+    [SerializeField] float m_holdOnWinnersDelay = 0;
+    [SerializeField] MinigameTitleCard m_gameTitleCard;
+    [SerializeField] BlackoutPanel m_blackoutCard;
+    [SerializeField] TimeDisplayed m_timeDisplayed;
+    [SerializeField] ThreeTwoOneGo_Countdown m_threeTwoOneGoCountdown;
 
 
-    public int m_mainPlayerStationIdx = 0;
-    public ItemObjective_Reuse m_mainPlayerRatCage;
-    public List<Transform> m_playerSpawnLocations;
-    public static List<Transform> m_otherPlayerRatCageLocations;
-    [SerializeField] public List<TMP_Text> m_playerNameTexts;
-    [SerializeField] public List<TMP_Text> m_playerScoreTexts;
+    [SerializeField] int m_mainPlayerRatCageIdx = 0;
+    [SerializeField] ItemObjective_Reuse m_mainPlayerRatCage;
+    [SerializeField] List<GameObject> m_otherPlayersRatCages;
+    [SerializeField] List<Transform> m_playerSpawnLocations;
+    [SerializeField] List<Transform> m_ratCageLocations;
+    [SerializeField] List<TMP_Text> m_playerNameTexts;
+    [SerializeField] List<TMP_Text> m_playerScoreTexts;
 
     private IEnumerator m_countdownCoroutine;
 
-    private PlayerControls m_playerControls;
-    [SerializeField] private float m_endGameHornHoldTime;
-    [SerializeField] private float m_endGameScoresHoldTime;
+    [SerializeField] float m_endGameHornHoldTime;
+    [SerializeField] float m_endGameScoresHoldTime;
+    [SerializeField] int m_pointsPerRat = 10;
 
-    public GameObject m_announcementTextPanel;
-    public List<GameObject> m_winnerTextPanels;
-    public List<TMP_Text> m_winnerTexts;
+    [SerializeField] GameObject m_announcementTextPanel;
+    [SerializeField] List<GameObject> m_winnerTextPanels;
+    [SerializeField] List<TMP_Text> m_winnerTexts;
 
     [SerializeField] Camera_FollowPlayer m_mainPlayerCameraFollow;
-    //private void OnEnable()
-    //{
-    //    for (int i = 0; i < 15; i++)
-    //    {
 
-    //        m_npcSpawners[0].SpawnNpc();
-    //    }
-    //}
+    private void Start()
+    {
+        m_mainPlayerRatCage.m_reportItemCompleted = UpdateMainPlayerPoints;
+    }
 
-
-
-    public override void SetSpawnerRequestDelegatesAndIndexes(RequestServerSpawnNpcDelegate Spawn, Action<int> Despawn, Func<bool> IsOwner)
+    public override void SetNpcSpawnerRequestDelegates(RequestServerSpawnNpcDelegate Spawn, Action<int> Despawn, Func<bool> IsOwner)
     {
         // Set the spawner to request the server to create the npc through the RatCatchGame
         for(int i=0; i < m_npcSpawners.Count; ++i)
         {
-            m_npcSpawners[i].m_requestServerSpawn = (NetworkDataObject_Npc n) => Spawn(n);
-            m_npcSpawners[i].m_requestServerDespawn = (int i) => Despawn(i);
-            m_npcSpawners[i].m_isServerOwner = () => { return IsOwner(); };
             m_npcSpawners[i].m_index = i;
+            m_npcSpawners[i].m_requestServerSpawn = (NetworkDataObject_Npc n) => Spawn(n);
+            m_npcSpawners[i].m_removeFromGameController = (int i) => Despawn(i);
+            m_npcSpawners[i].m_isGameOwner = () => { return IsOwner(); };
+            m_isGameOwner                  = () => { return IsOwner(); };
         }
     }
 
@@ -112,10 +109,12 @@ public class RatCatchGame : Game
         }
         if (signalGameControllerReady != null) signalGameControllerReady();
 
-
-        foreach (var npcSpawner in m_npcSpawners)
+        if (m_isGameOwner())
         {
-            npcSpawner.gameObject.SetActive(true);
+            foreach (var npcSpawner in m_npcSpawners)
+            {
+                npcSpawner.gameObject.SetActive(true);
+            }
         }
     }
     public override void StartGameOutro(SignalReadinessDelegate func = null)
@@ -197,13 +196,15 @@ public class RatCatchGame : Game
         {
             m_mainPlayerCameraFollow.SetTarget(playerControls.transform);
             m_playerControls = playerControls;
-            m_mainPlayerStationIdx = id;
+            m_mainPlayerRatCageIdx = id;
+            m_mainPlayerRatCage.transform.position = m_ratCageLocations[id].position;
         }
         else
         {
             m_playerNameTexts[id].gameObject.SetActive(true);
             m_playerNameTexts[id].text = playerControls.m_nameTextMesh.text;
             m_playerScoreTexts[id].gameObject.SetActive(true);
+            m_otherPlayersRatCages[id].SetActive(true);
         }
     }
 
@@ -255,16 +256,22 @@ public class RatCatchGame : Game
     }
 
 
-    public void AssignRatsToPlayerAndStation()
+    public void RatPutIntoCage()
     {
-        //m_playerControls.AssignTrapToPlayerSupplyItem(t);
-        //m_mainPlayerRatCage.AssignTrapToComplete(t);
+        UpdateMainPlayerPoints();
     }
 
     public void UpdateMainPlayerPoints()
     {
-        //m_playerControls.m_points += m_pointsPerCompletedTrap;
+        m_playerControls.m_points += m_pointsPerRat;
         m_mainPlayerScoreText.text = $"{m_playerControls.m_points} Points";
+    }
+
+
+    public void AssignRatsToPlayerAndStation()
+    {
+        //m_playerControls.AssignTrapToPlayerSupplyItem(t);
+        //m_mainPlayerRatCage.AssignTrapToComplete(t);
     }
 
     public override void UpdateOtherPlayerPoints(int playerIndex, int points)
