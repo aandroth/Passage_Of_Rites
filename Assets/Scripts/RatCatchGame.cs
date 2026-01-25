@@ -16,7 +16,7 @@ public class RatCatchGame : Game
 
 
     [SerializeField] int m_mainPlayerRatCageIdx = 0;
-    [SerializeField] ItemObjective_Reuse m_mainPlayerRatCage;
+    [SerializeField] ItemObjective m_mainPlayerRatCage;
     [SerializeField] List<GameObject> m_otherPlayersRatCages;
     [SerializeField] List<Transform> m_playerSpawnLocations;
     [SerializeField] List<Transform> m_ratCageLocations;
@@ -39,20 +39,7 @@ public class RatCatchGame : Game
     {
         m_mainPlayerRatCage.m_reportItemCompleted = UpdateMainPlayerPoints;
     }
-
-    public override void SetNpcSpawnerRequestDelegates(RequestServerSpawnNpcDelegate Spawn, Action<int> Despawn, Func<bool> IsOwner)
-    {
-        // Set the spawner to request the server to create the npc through the RatCatchGame
-        for(int i=0; i < m_npcSpawners.Count; ++i)
-        {
-            m_npcSpawners[i].m_index = i;
-            m_npcSpawners[i].m_requestServerSpawn = (NetworkDataObject_Npc n) => Spawn(n);
-            m_npcSpawners[i].m_removeFromGameController = (int i) => Despawn(i);
-            m_npcSpawners[i].m_isGameOwner = () => { return IsOwner(); };
-            m_isGameOwner                  = () => { return IsOwner(); };
-        }
-    }
-
+    
     public override void StartGamePlaying(SignalReadinessDelegate signalGameControllerReady = null)
     {
         m_playerControls.SetPlayerAsControllable();

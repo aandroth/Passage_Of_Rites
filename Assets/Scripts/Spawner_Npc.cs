@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Spawner_Npc : Spawner
 {
-    [SerializeField] NpcTypeData.NpcTypes m_npcType = NpcTypeData.NpcTypes.RAT;
+    [SerializeField] public NpcTypeData.NpcTypes m_npcType { get; private set; } = NpcTypeData.NpcTypes.RAT;
     private void OnEnable()
     {
         m_spawnCoroutine = SpawnSequenceCoroutine<NpcWander>();
@@ -15,7 +15,14 @@ public class Spawner_Npc : Spawner
     {
         NpcWander newNpc = SpawnNpc();
         if (newNpc != null)
+        {
             SendNetworkDataObjectToServer(newNpc.m_networkDataObjectNpc);
+            if (newNpc.HasItem())
+            {
+                newNpc.SetItemObjectValues();
+                SendItemNetworkDataObjectToServer(newNpc.GetNpcItem().m_networkDataObjectItem);
+            }
+        }
     }
 
 
@@ -26,13 +33,16 @@ public class Spawner_Npc : Spawner
         if (m_spawnCount >= m_spawnLimit) return null;
 
         NpcWander newNpc = SpawnObject<NpcWander>();
-        newNpc.FillNetworkDataObjectDelegates();
-        newNpc.SetIdSpawnerIdAndNpcType(newNpc.gameObject.GetInstanceID(), m_index, (int)m_npcType);
+        newNpc.SetNpcValues();
+        newNpc.SetIndexOfSpawnerInGame(m_indexOfSpawnerInGame);
+        newNpc.FillNetworkDataNpcObjectDelegates();
+        if (newNpc.HasItem()) newNpc.SetItemObjectValues();
         newNpc.m_onDestroy = DestroyAndSendToServer;
         ++m_spawnCount;
 
         if (m_isGameOwner != null && m_isGameOwner())
         {
+            newNpc.StartWandering();
             if (m_spawnCount >= m_spawnLimit && m_spawnCoroutine != null)
             {
                 StopCoroutine(m_spawnCoroutine);
@@ -42,25 +52,16 @@ public class Spawner_Npc : Spawner
         return newNpc;
     }
 
-
-    public void SetNpcItemDelegates(NpcWander npc)
-    {
-        if(npc.m_hasItem)
-        {
-            //ItemObjective_Reuse item = ItemObjectiveData_Reuse.Instance.GetItemObjectiveByNpcType(npc.m_npcType);
-            //if (item != null)
-            //{
-            //    npc.m_npcItem = item;
-            //    npc.m_npcItem.m_onPickedUp = npc.StopWandering;
-            //    npc.m_npcItem.m_onDropped = npc.StartWandering;
-            //}
-        }
-    }
-
     public void SendNetworkDataObjectToServer(NetworkDataObject_Npc n)
     {
         Debug.Log("SendSpawnRequest");
-        m_requestServerSpawn(n);
+        m_requestServerSpawnNpc(n);
+    }
+
+    public void SendItemNetworkDataObjectToServer(NetworkDataObject_Item n)
+    {
+        Debug.Log("SendItemRequest");
+        m_requestServerRegisterItem(n);
     }
 
     public override void DestroyAndSendToServer(int npcId)
@@ -73,8 +74,7 @@ public class Spawner_Npc : Spawner
             if (m_spawnCount < m_spawnLimit && m_spawnCoroutine != null)
                 StartCoroutine(m_spawnCoroutine);
         }
-
-        m_removeFromGameController(npcId);
+        m_removeNpcFromGameController(npcId);
     }
 
     public void ReceiveSpawnCommand(INetworkDataObject n)

@@ -4,6 +4,7 @@ using UnityEngine;
 public static class NpcTypeData
 {
     public enum NpcTypes { RAT, SLIME };
+    public static readonly Dictionary<NpcTypes, bool> NpcTypeHasItem = new Dictionary<NpcTypes, bool> { {NpcTypes.RAT, true}, {NpcTypes.SLIME, false} };
     public static Dictionary<NpcTypes, GameObject> m_npcTypeToPrefab = null;
 
     private static string m_resourcePath = "Prefabs/";

@@ -4,14 +4,13 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using Unity.VisualScripting;
 using UnityEngine;
 using static ItemObjective;
+using static ItemTypeData;
 using static PlayerControls;
 
 public class NpcWander : MonoBehaviour
 {
-
     [SerializeField] public int m_id { get; private set; }
-    [SerializeField] public int m_spawnerId { get; private set; }
-    [SerializeField] public bool m_hasItem { get; private set; }
+    [SerializeField] public int m_indexOfSpawnerInGame { get; private set; }
     [SerializeField] public NpcTypeData.NpcTypes m_npcType { get; private set; }
     [SerializeField] float m_runTimeMin = 2f, m_runTimeMax = 4f;
     [SerializeField] float m_waitTimeMin = 1f, m_waitTimeMax = 3f;
@@ -21,7 +20,7 @@ public class NpcWander : MonoBehaviour
     [SerializeField] string m_runAnimationName;
     [SerializeField] string m_idleAnimationName;
     [SerializeField] Animator m_animator;
-    [SerializeField] ItemObjective_Reuse m_npcItem = null;
+    [SerializeField] private ItemObjective m_npcItem = null;
     float m_positionDeltaThreshold = 0f;
     public enum NPC_STATE { IDLE, MOVING, DESTROYED }
     [SerializeField] NPC_STATE m_state = NPC_STATE.IDLE;
@@ -36,13 +35,18 @@ public class NpcWander : MonoBehaviour
     public OnDestroyDelegate m_onDestroy;
 
 
-    public void Start()
+    public void OnEnable()
     {
-        if (m_npcItem != null)
-        {
-            m_npcItem.SetDestroySelfUponCompletion(false);
-            m_npcItem.m_reportItemCompleted = NpcItemWasCompleted;
-        }
+        if (m_runTimeMin > m_runTimeMax)
+            Debug.LogError("NpcWander: Run Min time greater than max time!");
+        if (m_waitTimeMin > m_waitTimeMax)
+            Debug.LogError("NpcWander: Wait Min time greater than max time!");
+        StartWandering();
+    }
+
+    public bool HasItem()
+    {
+        return m_npcItem != null;
     }
 
     public void NpcItemWasCompleted()
@@ -51,11 +55,16 @@ public class NpcWander : MonoBehaviour
         Destroy(gameObject);
     }
 
-    public void FillNetworkDataObjectDelegates()
+    public ItemObjective GetNpcItem()
+    {
+        return m_npcItem;
+    }
+
+    public void FillNetworkDataNpcObjectDelegates()
     {
         m_networkDataObjectNpc.m_getId = () => { return m_id; };
-        m_networkDataObjectNpc.m_getSpawnerId = () => { return m_spawnerId; };
-        m_networkDataObjectNpc.m_setIdSpawnerIdAndNpcType = SetIdSpawnerIdAndNpcType;
+        m_networkDataObjectNpc.m_getIndexOfSpawnerInGame = () => { return m_indexOfSpawnerInGame; };
+        m_networkDataObjectNpc.m_setIdSpawnerIdAndNpcType = SetIdSpawnerIdxAndNpcType;
         m_networkDataObjectNpc.m_getCurrentValues = GetCurrentValues;
         m_networkDataObjectNpc.m_getAllCurrentValues = GetAllCurrentValues;
         m_networkDataObjectNpc.m_getCurrentState = () => { return m_state; };
@@ -67,30 +76,41 @@ public class NpcWander : MonoBehaviour
         m_networkDataObjectNpc.m_prevData.m_state = 0;
 
         m_wanderCoroutine = WanderCoroutine();
-        if(GameController.Instance.m_isGameOwner)
-            StartWandering();
         m_networkDataObjectNpc.SetChangedDataToCurrentValues();
     }
 
-    public void OnEnable()
+    public void SetNpcValues()
     {
-        if (m_runTimeMin > m_runTimeMax)
-            Debug.LogError("NpcWander: Run Min time greater than max time!");
-        if (m_waitTimeMin > m_waitTimeMax)
-            Debug.LogError("NpcWander: Wait Min time greater than max time!");
-        if(m_wanderCoroutine != null && GameController.Instance.m_isGameOwner) 
-            StartWandering();
+        m_id = gameObject.GetInstanceID();
+        FillNetworkDataNpcObjectDelegates();
+    }
+
+    public void SetItemObjectValues()
+    {
+        if (m_npcItem == null) return;
+
+        Debug.Log("NpcWander: NPC has item");
+        m_npcItem.SetItemObjectiveValues();
+        m_npcItem.SetOwnerIdAndType_FromOwner(m_id, ITEM_OWNER_TYPE.NPC);
+        m_npcItem.SetDestroySelfUponCompletion(false);
+        m_npcItem.m_reportItemCompleted = NpcItemWasCompleted;
+        m_npcItem.FillNetworkDataItemObjectDelegates();
+        m_npcItem.m_networkDataObjectItem.GetAllData();
     }
 
     public void StartWandering()
     {
-        StartCoroutine(m_wanderCoroutine);
+        if (m_wanderCoroutine != null && GameController.Instance.m_isGameOwner)
+            StartCoroutine(m_wanderCoroutine);
     }
 
     public void StopWandering()
     {
-        StopCoroutine(m_wanderCoroutine);
-        PlayIdleCycle();
+        if (m_wanderCoroutine != null && GameController.Instance.m_isGameOwner)
+        {
+            StopCoroutine(m_wanderCoroutine);
+            PlayIdleCycle();
+        }
     }
 
     private IEnumerator WanderCoroutine()
@@ -151,10 +171,15 @@ public class NpcWander : MonoBehaviour
         CorrectFacing();
     }
 
-    public void SetIdSpawnerIdAndNpcType(int id, int spawnerId, int type)
+    public void SetIndexOfSpawnerInGame(int indexOfSpawnerInGame)
+    {
+        m_indexOfSpawnerInGame = indexOfSpawnerInGame;
+    }
+
+    public void SetIdSpawnerIdxAndNpcType(int id, int indexOfSpawnerInGame, int type)
     {
         m_id = id;
-        m_spawnerId = spawnerId;
+        m_indexOfSpawnerInGame = indexOfSpawnerInGame;
         m_npcType = (NpcTypeData.NpcTypes)(type);
     }
 
@@ -206,7 +231,7 @@ public class NpcWander : MonoBehaviour
     {
         return new List<float>() {
             m_id,
-            m_spawnerId,
+            m_indexOfSpawnerInGame,
             (int)m_npcType,
             transform.position.x,
             transform.position.y,

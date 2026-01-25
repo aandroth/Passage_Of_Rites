@@ -43,8 +43,10 @@ public class ItemObjective_Trap : ItemObjective
     public delegate void ReportSupplyCheckedOff();
     public ReportTrapCompleted m_reportSupplyCheckedOff;
 
-    public void Start()
+    public override void Start()
     {
+        m_neededSupplyItemsMasterList = new List<SupplyItemName>(m_neededSupplyItems);
+
         if (m_trapTypeToSpriteDict == null)
         {
             m_trapTypeToSpriteDict = new Dictionary<TrapType, Sprite> {

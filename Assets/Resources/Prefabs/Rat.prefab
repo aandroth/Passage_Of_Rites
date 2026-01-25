@@ -40,7 +40,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6454822022507140311}
-  - component: {fileID: 8151283673297584036}
   - component: {fileID: 2532988999630754396}
   - component: {fileID: 2235472894921342437}
   - component: {fileID: 8398922025531561732}
@@ -69,31 +68,9 @@ Transform:
   - {fileID: 7929828174337727113}
   - {fileID: 4403559388053649682}
   - {fileID: 833356370355548103}
+  - {fileID: 2013117807693395002}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8151283673297584036
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1509952577828771444}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4b8591fc0bfaa3040acc0b9a02d4a2a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_isSupplier: 1
-  m_isHighlightable: 1
-  m_playerInRange: 0
-  m_highlightSprite: {fileID: 1442527614280478999}
-  m_idOfOwningNpc: -1
-  m_suppliesNeededIcons: []
-  m_neededSupplyItems: 00000000
-  m_supplyItemOnInteraction: 0
-  m_supplyItemOnCompletion: 8
-  m_neededSupplyItemsMasterList: 
-  m_destroySelfOnCompletion: 1
 --- !u!114 &2532988999630754396
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -116,7 +93,7 @@ MonoBehaviour:
   m_runAnimationName: Run
   m_idleAnimationName: Idle
   m_animator: {fileID: 2235472894921342437}
-  m_npcItem: {fileID: 8151283673297584036}
+  m_npcItem: {fileID: 3697421235429438969}
   m_state: 0
 --- !u!95 &2235472894921342437
 Animator:
@@ -468,3 +445,61 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0.36}
   m_Radius: 0.34
+--- !u!1 &5844060608619459033
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2013117807693395002}
+  - component: {fileID: 3697421235429438969}
+  m_Layer: 0
+  m_Name: RatItem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2013117807693395002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5844060608619459033}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6454822022507140311}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3697421235429438969
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5844060608619459033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b8591fc0bfaa3040acc0b9a02d4a2a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_isSupplier: 1
+  m_isHighlightable: 1
+  m_playerInRange: 0
+  m_highlightSprite: {fileID: 1442527614280478999}
+  m_ownerId: -1
+  m_suppliesNeededIcons: []
+  m_neededSupplyItems: 00000000
+  m_supplyItemOnInteraction: 0
+  m_supplyItemOnCompletion: 8
+  m_itemType: 0
+  m_neededSupplyItemsMasterList: 
+  m_destroySelfOnCompletion: 1
+  m_state: 0
+  m_ownerType: 2

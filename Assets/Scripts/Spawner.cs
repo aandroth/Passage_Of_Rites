@@ -6,7 +6,7 @@ using Random = UnityEngine.Random;
 
 public abstract class Spawner : MonoBehaviour
 {
-    [SerializeField] public int m_index = 0;
+    [SerializeField] public int m_indexOfSpawnerInGame = 0;
     [SerializeField] Transform m_SpawnCenterLocation;
     [SerializeField] float m_spawnRadius = 2f;
     [SerializeField] GameObject m_spawnPrefab;
@@ -15,12 +15,20 @@ public abstract class Spawner : MonoBehaviour
     [SerializeField] protected int m_spawnLimit = 10, m_spawnCount = 0;
     protected IEnumerator m_spawnCoroutine;
 
-    public delegate void RequestServerSpawnDelegate(NetworkDataObject_Npc dataObj);
-    public RequestServerSpawnDelegate m_requestServerSpawn;
-    public delegate void RemoveFromGameControllerDelegate(int npcId);
-    public RemoveFromGameControllerDelegate m_removeFromGameController;
+    public delegate void RequestServerSpawnNpcDelegate(NetworkDataObject_Npc dataObj);
+    public RequestServerSpawnNpcDelegate m_requestServerSpawnNpc;
+    public delegate void RemoveNpcFromGameControllerDelegate(int npcId);
+    public RemoveNpcFromGameControllerDelegate m_removeNpcFromGameController;
     public delegate void NpcDestroyedDelegate(int npcId);
     public NpcDestroyedDelegate m_npcDestroyed;
+
+    public delegate void RequestServerRegisterItemDelegate(NetworkDataObject_Item dataObj);
+    public RequestServerRegisterItemDelegate m_requestServerRegisterItem;
+    public delegate void DeregisterItemFromGameControllerDelegate(int itemId);
+    public DeregisterItemFromGameControllerDelegate m_deregisterItemFromGameController;
+    public delegate void ItemDestroyedDelegate(int itemId);
+    public ItemDestroyedDelegate m_itemDestroyed;
+
     public delegate bool SpawnCommandFromServerDelegate();
     public SpawnCommandFromServerDelegate m_spawnCommandFromServer;
     public delegate bool IsGameOwnerDelegate();

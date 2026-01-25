@@ -25,6 +25,8 @@ public class Backend : MonoBehaviour
     public GetIdFromGameControllerDelegate GetIdFromGameController;
     public delegate void GetAllNpcChangedDataFromGameControllerDelegate();
     public GetAllNpcChangedDataFromGameControllerDelegate GetAllNpcChangedDataFromGameController;
+    public delegate void GetAllItemObjectiveChangedDataFromGameControllerDelegate();
+    public GetAllItemObjectiveChangedDataFromGameControllerDelegate GetAllItemObjectiveChangedDataFromGameController;
 
     public string m_apiGatewayUrl = "https://t2lfwpskr0.execute-api.us-west-2.amazonaws.com/dev";
     public string m_serverUrl = "localhost"; //"18.237.4.137";
@@ -327,42 +329,6 @@ public class Backend : MonoBehaviour
         Debug.Log($"Request finished");
     }
 
-    public void Update()
-    {
-#if !UNITY_WEBGL || UNITY_EDITOR
-        if(m_connected)
-            m_webSocket.DispatchMessageQueue();
-#endif
-        //if (Input.GetKeyUp(KeyCode.I))
-        //{
-        //    Debug.Log("Calling API Gateway");
-        //    StartCoroutine(RequestNewServerCoroutine((str) => { Debug.Log($"API called from keystroke with result: {str}"); }));
-        //}
-        //if (Input.GetKeyUp(KeyCode.O))
-        //{
-        //    Debug.Log("Calling connection");
-        //    StartWebSocketConnection();
-        //}
-        //if (Input.GetKeyUp(KeyCode.P))
-        //{
-        //    Debug.Log("Cancelling connection");
-        //    CancelConnection();
-        //}
-
-        if (m_connected && GetPlayerData != null && m_gameInProgress)
-        {
-            m_intervalTimeCurr += Time.deltaTime;
-            if (m_intervalTimeCurr >= m_intervalTime)
-            {
-                m_intervalTimeCurr = 0;
-                SendPlayerChangedData(); 
-                if(GameController.Instance.m_isGameOwner)
-                    GetAllNpcChangedDataFromGameController();
-                PingToServer();
-            }
-        }
-    }
-
     public void SendPlayerChangedData()
     {
         string changes = GetPlayerData();
@@ -398,25 +364,26 @@ public class Backend : MonoBehaviour
         m_webSocket?.Send(bytes);
     }
 
-    public void SendNpcDespawnData(int id)
+    public void SendItemObjectiveChangedData(NetworkDataObject_Item itemData)
     {
-        string dataAsString = $"Despawn_Npc{id}";
-        Debug.Log($"Sending: {dataAsString}");
-        var bytes = System.Text.Encoding.UTF8.GetBytes(dataAsString);
-        m_webSocket?.Send(bytes);
-    }
-
-    public void SendItemObjectiveChangedData()
-    {
-        string changes = GetItemObjectiveData();
+        string changes = itemData.GetChangedData();
         if (changes != "Unchanged")
         {
             changes = $"Update_ItemObjective{changes}";
             Debug.Log($"Sending: {changes}");
             var bytes = System.Text.Encoding.UTF8.GetBytes(changes);
             m_webSocket?.Send(bytes);
-            SetItemObjectiveChangedDataToCurrentValues();
+            itemData.SetChangedDataToCurrentValues();
         }
+    }
+
+    public void SendItemRegisteredData(NetworkDataObject_Item itemData)
+    {
+        var data = itemData.GetAllData();
+        string dataAsString = $"Register_Item{data}";
+        Debug.Log($"Sending: {dataAsString}");
+        var bytes = System.Text.Encoding.UTF8.GetBytes(dataAsString);
+        m_webSocket?.Send(bytes);
     }
 
     public void OnDestroy()
@@ -514,6 +481,45 @@ public class Backend : MonoBehaviour
                 break;
         }
     }
+    public void Update()
+    {
+#if !UNITY_WEBGL || UNITY_EDITOR
+        if (m_connected)
+            m_webSocket.DispatchMessageQueue();
+#endif
+        //if (Input.GetKeyUp(KeyCode.I))
+        //{
+        //    Debug.Log("Calling API Gateway");
+        //    StartCoroutine(RequestNewServerCoroutine((str) => { Debug.Log($"API called from keystroke with result: {str}"); }));
+        //}
+        //if (Input.GetKeyUp(KeyCode.O))
+        //{
+        //    Debug.Log("Calling connection");
+        //    StartWebSocketConnection();
+        //}
+        //if (Input.GetKeyUp(KeyCode.P))
+        //{
+        //    Debug.Log("Cancelling connection");
+        //    CancelConnection();
+        //}
+
+        if (m_connected && GetPlayerData != null && m_gameInProgress)
+        {
+            m_intervalTimeCurr += Time.deltaTime;
+            if (m_intervalTimeCurr >= m_intervalTime)
+            {
+                m_intervalTimeCurr = 0;
+                SendPlayerChangedData();
+                if (GameController.Instance.m_isGameOwner)
+                {
+                    GetAllNpcChangedDataFromGameController();
+                    GetAllItemObjectiveChangedDataFromGameController();
+                }
+                PingToServer();
+            }
+        }
+    }
+
 
     public void SetServerUrl(string url)
     {

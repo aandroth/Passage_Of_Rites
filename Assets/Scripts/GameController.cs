@@ -6,6 +6,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using static NpcTypeData;
+using static ItemTypeData;
 
 public class GameController : MonoBehaviour
 {
@@ -13,7 +14,7 @@ public class GameController : MonoBehaviour
     public float m_pullChangedDataInterval;
     public Dictionary<int, PlayerControls> m_playersDict = new Dictionary<int, PlayerControls>();
     public Dictionary<int, NetworkDataObject_Npc> m_npcsDict = new Dictionary<int, NetworkDataObject_Npc>();
-    public Dictionary<int, PlayerControls> m_itemsDict = new Dictionary<int, PlayerControls>();
+    public Dictionary<int, NetworkDataObject_Item> m_itemsDict = new Dictionary<int, NetworkDataObject_Item>();
     public GameObject m_playerPrefab;
     public int m_mainPlayerId = -1;
     public bool m_isGameOwner;
@@ -56,6 +57,7 @@ public class GameController : MonoBehaviour
             m_backend.GetPlayerData = GetPlayerChangedData;
             m_backend.SetPlayerChangedDataToCurrentValues = SetPlayerChangedDataToCurrentValues;
             m_backend.GetAllNpcChangedDataFromGameController = CallAllNpcChangedDataToServer;
+            m_backend.GetAllItemObjectiveChangedDataFromGameController = CallAllItemChangedDataToServer;
             m_backend.ReceivedMessageForGameController = ReceivedMessage;
             m_backend.GetIdFromGameController = () => { return m_mainPlayerId; };
         }
@@ -83,10 +85,10 @@ public class GameController : MonoBehaviour
             m_npcsDict[int.Parse(npcData[1])].PutChangedData(npcData);
     }
 
-    public void UpdateItemObjective(int id, string[] playerData)
+    public void UpdateItemObjective(int id, string[] itemData)
     {
-        if (m_playersDict.ContainsKey(id))
-            m_playersDict[int.Parse(playerData[1])].PutChangedData(playerData);
+        if (m_itemsDict.ContainsKey(id))
+            m_itemsDict[int.Parse(itemData[1])].PutChangedData(itemData);
     }
 
     public void SetInterval(int id, string[] playerData)
@@ -145,6 +147,30 @@ public class GameController : MonoBehaviour
         m_npcsDict.Remove(npcId);
     }
 
+    public void RegisterItem(NetworkDataObject_Item item)
+    {
+        Debug.Log($"RegisterItem called on {item.m_getId()}");
+        if (m_itemsDict.ContainsKey(item.m_getId()))
+            return;
+
+        m_itemsDict[item.m_getId()] = item;
+        m_backend.SendItemRegisteredData(item);
+    }
+
+    public void DeregisterItem(int itemId)
+    {
+        if (!m_itemsDict.ContainsKey(itemId))
+            return;
+
+        if (m_itemsDict[itemId].m_getCurrentState() != ITEM_STATE.DESTROYED)
+        {
+            Debug.Log($"{itemId} was not marked as Destroyed, so this should be a result of this player destroying it");
+            m_itemsDict[itemId].MarkAsDestroyed();
+            m_backend.SendItemObjectiveChangedData(m_itemsDict[itemId]);
+        }
+        m_itemsDict.Remove(itemId);
+    }
+
     public void CreateItem(int id, string[] data)
     {
 
@@ -181,6 +207,15 @@ public class GameController : MonoBehaviour
             m_backend.SendNpcChangedData(npc);
         }
     }
+
+    public void CallAllItemChangedDataToServer()
+    {
+        foreach (NetworkDataObject_Item item in m_itemsDict.Values)
+        {
+            m_backend.SendItemObjectiveChangedData(item);
+        }
+    }
+
     public void SetPlayerChangedDataToCurrentValues()
     {
         if(m_mainPlayerId != -1) m_playersDict[m_mainPlayerId].SetChangedDataToCurrentValues();
@@ -193,8 +228,9 @@ public class GameController : MonoBehaviour
             if (m_game != null)
             {
                 m_game.m_skipIntro = m_skipGameIntros;
+                m_game.m_isGameOwner = () => { return m_isGameOwner; };
                 m_backend.SignalReadinessToServer(m_mainPlayerId);
-                if (scene.name == m_titleSceneName && m_mainPlayerId != -1)
+                if (scene.name == m_titleSceneName && m_mainPlayerId != -1 && m_playersDict.ContainsKey(m_mainPlayerId))
                 {
                     m_game.SendNameToTitleSceneController(m_playersDict[m_mainPlayerId].m_nameTextMesh.text);
                     if(m_backend.m_connected)
@@ -203,27 +239,14 @@ public class GameController : MonoBehaviour
                 else if(scene.name != m_endSceneName)
                 {
                     m_game.SetNpcSpawnerRequestDelegates(SpawnNpcFromSpawner,
-                                                                   DespawnNpc,
-                                                                   () => { return m_isGameOwner; });
+                                                         DespawnNpc,
+                                                         () => { return m_isGameOwner; });
+                    m_game.SetItemSpawnerRequestDelegates(RegisterItem,
+                                                          DeregisterItem,
+                                                          () => { return m_isGameOwner; });
                 }
-                //if (m_autoStartIntro) // For testing games within their scene
-                //{
-                //    PlayerControls pc = GameObject.Instantiate(m_playerPrefab, Vector3.zero, Quaternion.identity).GetComponent<PlayerControls>();
-                //    pc.m_isMainPlayer = true;
-                //    m_game.AssignPlayer(pc, 0, true);
-                //    m_game.StartGameIntro();
-                //}
             }
         }
-    }
-
-    private void SetSpawnerRequestDelegatesAndIndexes(ref Spawner spawner)
-    {
-        if(spawner == null) return;
-
-        spawner.m_requestServerSpawn = SpawnNpcFromSpawner;
-        spawner.m_removeFromGameController = DespawnNpc;
-        spawner.m_isGameOwner = () => { return m_isGameOwner; };
     }
 
     public void DestroyPlayer()

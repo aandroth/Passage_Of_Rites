@@ -23,8 +23,12 @@ public abstract class Game : MonoBehaviour
 
     public delegate void UpdatMainPlayerPoints(int idx);
     public UpdatMainPlayerPoints m_updateMainPlayerPoints;
+
+    // Npc delegates
     public delegate void RequestServerSpawnNpcDelegate(NetworkDataObject_Npc n);
     public RequestServerSpawnNpcDelegate m_requestServerSpawnNpc;
+    public delegate void SetSpawnerRequestDelegatesAndIndexesNpcDelegate(ref Spawner s);
+    public SetSpawnerRequestDelegatesAndIndexesNpcDelegate m_setSpawnerRequestDelegatesAndIndexesNpc;
 
     public delegate void RequestServerGetAllDataNpcDelegate();
     public RequestServerGetChangedDataNpcDelegate m_requestServerGetChangedDataNpc;
@@ -36,8 +40,23 @@ public abstract class Game : MonoBehaviour
     public delegate void RequestServerPutChangedDataNpcDelegate(NetworkDataObject_Npc n);
     public RequestServerPutChangedDataNpcDelegate m_requestServerPutAllDataNpc;
 
-    public delegate void SetSpawnerRequestDelegatesAndIndexesNpcDelegate(ref Spawner s);
-    public SetSpawnerRequestDelegatesAndIndexesNpcDelegate m_setSpawnerRequestDelegatesAndIndexesNpc;
+
+    // Item delegates
+    public delegate void RequestServerRegisterItemDelegate(NetworkDataObject_Item n);
+    public RequestServerRegisterItemDelegate m_requestServerRegisterItem;
+
+    public delegate void RequestServerGetAllDataItemDelegate();
+    public RequestServerGetChangedDataItemDelegate m_requestServerGetChangedDataItem;
+    public delegate void RequestServerGetChangedDataItemDelegate(NetworkDataObject_Item n);
+    public RequestServerGetChangedDataItemDelegate m_requestServerGetAllDataItem;
+
+    public delegate void RequestServerPutAllDataItemDelegate(NetworkDataObject_Item n);
+    public RequestServerPutChangedDataItemDelegate m_requestServerPutChangedDataItem;
+    public delegate void RequestServerPutChangedDataItemDelegate(NetworkDataObject_Item n);
+    public RequestServerPutChangedDataItemDelegate m_requestServerPutAllDataItem;
+
+    public delegate void SetItemRegisterAndDeregisterDelegate(ref Spawner s);
+    public SetItemRegisterAndDeregisterDelegate m_setItemRegisterAndDeregister;
 
     //[SerializeField] List<>
 
@@ -48,7 +67,6 @@ public abstract class Game : MonoBehaviour
         public string titles;
         public int points;
     }
-    public virtual void SetNpcSpawnerRequestDelegates(RequestServerSpawnNpcDelegate Spawn, Action<int> Despawn, Func<bool> IsOwner) { }
     public virtual void NpcSpawn(RequestServerSpawnNpcDelegate n) { }
     public virtual void StartGameIntro(SignalReadinessDelegate signalGameControllerReady = null) {  }
     public virtual void StartGameOutro(SignalReadinessDelegate signalGameControllerReady = null) { }
@@ -81,4 +99,39 @@ public abstract class Game : MonoBehaviour
         return null;
     }
 
+
+
+    public virtual void SetNpcSpawnerRequestDelegates(RequestServerSpawnNpcDelegate Spawn, Action<int> Despawn, Func<bool> IsOwner)
+    {
+        for (int i = 0; i < m_npcSpawners.Count; ++i)
+        {
+            m_npcSpawners[i].m_indexOfSpawnerInGame = i;
+            m_npcSpawners[i].m_requestServerSpawnNpc = (NetworkDataObject_Npc n) => Spawn(n);
+            m_npcSpawners[i].m_removeNpcFromGameController = (int i) => Despawn(i);
+            m_npcSpawners[i].m_isGameOwner = () => { return IsOwner(); };
+        }
+    }
+
+    public virtual void SetItemSpawnerRequestDelegates(RequestServerRegisterItemDelegate Register, Action<int> Deregister, Func<bool> IsOwner)
+    {
+        Debug.Log("Setting item spawner request delegates in Game");
+        for (int i = 0; i < m_npcSpawners.Count; ++i)
+        {
+            if (NpcTypeData.NpcTypeHasItem[m_npcSpawners[i].m_npcType])
+            {
+                Debug.Log("Npc Spawner has item on Npc, so setting delegates");
+                m_npcSpawners[i].m_indexOfSpawnerInGame = i;
+                m_npcSpawners[i].m_requestServerRegisterItem = (NetworkDataObject_Item n) => Register(n);
+                m_npcSpawners[i].m_deregisterItemFromGameController = (int i) => Deregister(i);
+                m_npcSpawners[i].m_isGameOwner = () => { return IsOwner(); };
+            }
+        }
+        for (int i = 0; i < m_itemObjectiveSpawners.Count; ++i)
+        {
+            m_itemObjectiveSpawners[i].m_indexOfSpawnerInGame = i;
+            m_itemObjectiveSpawners[i].m_requestServerRegisterItem = (NetworkDataObject_Item n) => Register(n);
+            m_itemObjectiveSpawners[i].m_deregisterItemFromGameController = (int i) => Deregister(i);
+            m_itemObjectiveSpawners[i].m_isGameOwner = () => { return IsOwner(); };
+        }
+    }
 }

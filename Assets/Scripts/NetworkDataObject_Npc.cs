@@ -14,8 +14,8 @@ public class NetworkDataObject_Npc
 
     public delegate int GetIdDelegate();
     public GetIdDelegate m_getId;
-    public delegate int GetSpawnerIdDelegate();
-    public GetSpawnerIdDelegate m_getSpawnerId;
+    public delegate int GetIndexOfSpawnerInGameDelegate();
+    public GetIndexOfSpawnerInGameDelegate m_getIndexOfSpawnerInGame;
     public delegate void SetIdSpawnerIdAndNpcTypeDelegate(int i, int s, int t);
     public SetIdSpawnerIdAndNpcTypeDelegate m_setIdSpawnerIdAndNpcType;
     public delegate void UpdateTransformDelegate(List<float?> t);
@@ -84,11 +84,11 @@ public class NetworkDataObject_Npc
 
         //"id, spawnerId, NpcType, position_X, position_Y, transform.localScale_X, state";
         //  1,         2,       3,          4,          5,                      6,     7
-        /*0,1,2,3*/ string allData = $",{currValues[0]},{currValues[1]},{currValues[2]},";
-        /*4,  */ allData += $"{currValues[3]},";
-        /*5,  */ allData += $"{currValues[4]},";
-        /*6,  */ allData += $"{currValues[5]},";
-        /*7,  */ allData += $"{currValues[6]}";
+        /*0,1,2*/ string allData = $",{currValues[0]},{currValues[1]},{currValues[2]},";
+        /*3,  */ allData += $"{currValues[3]},";
+        /*4,  */ allData += $"{currValues[4]},";
+        /*5,  */ allData += $"{currValues[5]},";
+        /*6,  */ allData += $"{currValues[6]}";
         return allData;
     }
 
@@ -102,11 +102,14 @@ public class NetworkDataObject_Npc
         //"position_X, position_Y, transform.localScale_X";
         //          0,          1,                      2
 
-        List<float?> possibleTransformChanges = new List<float?>() { null, null, null };
-        if (changedDataList[4] != "") possibleTransformChanges[0] = float.Parse(changedDataList[4]);
-        if (changedDataList[5] != "") possibleTransformChanges[1] = float.Parse(changedDataList[5]);
-        if (changedDataList[6] != "") possibleTransformChanges[2] = float.Parse(changedDataList[6]);
-        m_updateTransform(possibleTransformChanges);
+        if ((changedDataList[4] != "") || (changedDataList[5] != "") || (changedDataList[6] != ""))
+        {
+            List<float?> possibleTransformChanges = new List<float?>() { null, null, null };
+            if (changedDataList[4] != "") possibleTransformChanges[0] = float.Parse(changedDataList[4]);
+            if (changedDataList[5] != "") possibleTransformChanges[1] = float.Parse(changedDataList[5]);
+            if (changedDataList[6] != "") possibleTransformChanges[2] = float.Parse(changedDataList[6]);
+            m_updateTransform(possibleTransformChanges);
+        }
 
         if (changedDataList[7] != "") m_updateState(int.Parse(changedDataList[7]));
     }
