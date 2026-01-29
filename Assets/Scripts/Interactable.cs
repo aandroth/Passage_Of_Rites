@@ -16,4 +16,15 @@ public abstract class Interactable : MonoBehaviour
     public abstract Vector3 GetCenterPoint();
     public virtual bool IsSupplier() { return m_isSupplier; }
     public virtual bool IsHighlightable() { return m_isHighlightable; }
+
+    public virtual SupplyItemName GetSupplyItemName() { return SupplyItemName.NOTHING; }
+    public virtual void SetSupplyItem(SupplyItemName supplyItemName) { }
+
+    //public struct ItemObjectiveIcon{
+    //    public SpriteRenderer m_iconSpriteRenderer;
+    //    public Animator       m_iconSpriteAnimator;
+    //    public bool           m_isResusable;
+    //    public float          m_resusableCooldown;
+
+    //}
 }

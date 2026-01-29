@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using static ItemTypeData;
+using static ItemObjectiveData;
 
 public class NetworkDataObject_Item
 {

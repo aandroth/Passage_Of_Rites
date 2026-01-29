@@ -6,7 +6,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using static NpcTypeData;
-using static ItemTypeData;
+using static ItemObjectiveData;
 
 public class GameController : MonoBehaviour
 {
@@ -31,7 +31,10 @@ public class GameController : MonoBehaviour
 
     public void Start()
     {
-        
+        if (NpcTypeData.m_npcTypeToPrefab == null)
+            NpcTypeData.LoadResourcesIntoTypePrefabDict();
+        if (ItemObjectiveData.m_supplyItemNameToPrefab == null)
+            ItemObjectiveData.LoadResourcesIntoTypePrefabDict();
     }
 
     public void OnEnable()
@@ -368,12 +371,18 @@ public class GameController : MonoBehaviour
             case "New_Npc":
                 SpawnNpcFromServer(id, serverData);
                 break;
-            //case "New_ItemObjective":
-            //    PlayerControls pc = CreateCharacter(m_mainPlayerId == id, id, serverData);
-            //    m_game?.AssignPlayer(pc, id, m_mainPlayerId == id);
-            //    if (m_mainPlayerId == id)
-            //        m_backend.SignalReadinessToServer(id);
-            //    break;
+            case "New_ItemObjective":
+                if (serverData[4] == "0")
+                {
+                    ItemObjective newItem = Spawner.SpawnItemObjectiveFromData(serverData);
+                    newItem.m_onDestroy = DeregisterItem;
+                    m_itemsDict[int.Parse(serverData[1])] = newItem.m_networkDataObjectItem;
+                }
+                else if (serverData[4] == "2")
+                {
+                    m_itemsDict[int.Parse(serverData[1])] = m_npcsDict[int.Parse(serverData[2])].m_passThroughFillNpcItemData(serverData);
+                }
+                break;
             case "Update_Player":
                 UpdateCharacter(id, serverData);
                 if (id != m_mainPlayerId && serverData[8] != "") m_game?.UpdateOtherPlayerPoints(id, int.Parse(serverData[8]));

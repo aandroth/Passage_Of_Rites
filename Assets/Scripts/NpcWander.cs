@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Unity.VisualScripting;
 using UnityEngine;
-using static ItemObjective;
-using static ItemTypeData;
-using static PlayerControls;
+using static ItemObjectiveData;
 
 public class NpcWander : MonoBehaviour
 {
@@ -71,6 +69,7 @@ public class NpcWander : MonoBehaviour
         m_networkDataObjectNpc.m_updateTransform = UpdateTransformValues;
         m_networkDataObjectNpc.m_updateState = UpdateState;
         m_networkDataObjectNpc.m_playerBecameGameOwner = StartWandering;
+        m_networkDataObjectNpc.m_passThroughFillNpcItemData = PassThroughFillNpcItemData;
 
         m_networkDataObjectNpc.m_prevData.m_prevTransformData = new List<float>() {0f,0f,0f};
         m_networkDataObjectNpc.m_prevData.m_state = 0;
@@ -238,6 +237,12 @@ public class NpcWander : MonoBehaviour
             transform.localScale.x,
             (float)m_state
         };
+    }
+
+    public NetworkDataObject_Item PassThroughFillNpcItemData(string[] data)
+    {
+        m_npcItem.m_networkDataObjectItem.PutAllData(data);
+        return m_npcItem.m_networkDataObjectItem;
     }
     public void OnDestroy()
     {

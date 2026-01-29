@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using static ItemObjectiveData;
 
 public abstract class Spawner : MonoBehaviour
 {
@@ -38,10 +39,6 @@ public abstract class Spawner : MonoBehaviour
 
     public void Start()
     {
-        if(NpcTypeData.m_npcTypeToPrefab == null)
-        {
-            NpcTypeData.LoadResourcesIntoTypePrefabDict();
-        }
     }
 
     public IEnumerator SpawnSequenceCoroutine<T>()
@@ -63,6 +60,15 @@ public abstract class Spawner : MonoBehaviour
     {
         Vector2 spawnPosition = (Vector2)m_SpawnCenterLocation.position + Random.insideUnitCircle.normalized * m_spawnRadius; // Spawns at the edge of the spawn radius
         T newObject = Instantiate(m_spawnPrefab, spawnPosition, Quaternion.identity).GetComponent<T>();
+        return newObject;
+    }
+
+    public static ItemObjective SpawnItemObjectiveFromData(string[] data)
+    {
+        Vector2 spawnPosition = new Vector2(float.Parse(data[5]), float.Parse(data[6]));
+        ItemObjective newObject = Instantiate(m_supplyItemNameToPrefab[(SupplyItemName)int.Parse(data[3])], spawnPosition, Quaternion.identity).GetComponent<ItemObjective>();
+        newObject.FillNetworkDataItemObjectDelegates();
+        newObject.m_networkDataObjectItem.PutAllData(data);
         return newObject;
     }
 }

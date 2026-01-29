@@ -30,6 +30,8 @@ public class NetworkDataObject_Npc
     public GetCurrentStateDelegate m_getCurrentState;
     public delegate void PlayerBecameGameOwnerDelegate();
     public PlayerBecameGameOwnerDelegate m_playerBecameGameOwner;
+    public delegate NetworkDataObject_Item PassThroughFillNpcItemDataDelegate(string[] s);
+    public PassThroughFillNpcItemDataDelegate m_passThroughFillNpcItemData;
 
     public float positionChangeThreshhold = 10f;
 
@@ -129,6 +131,11 @@ public class NetworkDataObject_Npc
         m_updateTransform(transformValues);
 
         m_updateState(int.Parse(fullDataList[7]));
+    }
+
+    public NetworkDataObject_Item PutAllNpcItemDataAndReturnItem(string[] data)
+    {
+        return m_passThroughFillNpcItemData(data);
     }
 
     public void MarkAsDestroyed()

@@ -2,24 +2,24 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using static ItemObjectiveData;
-using static ItemTypeData;
 
 public class ItemObjective : Interactable
 {
-    [SerializeField] public int m_id { get; private set; }
+
+    [SerializeField] public int m_id { get; protected set; }
     [SerializeField] public int m_ownerId = -1;
-    [SerializeField] protected ITEM_TYPES m_itemType = ITEM_TYPES.PICKUP;
+    [SerializeField] protected SupplyItemName m_supplyItemName = SupplyItemName.POT_LID;
     [SerializeField] public ITEM_OWNER_TYPE m_ownerType = ITEM_OWNER_TYPE.SELF;
     [SerializeField] protected ITEM_STATE m_state = ITEM_STATE.NONE;
 
 
     [SerializeField] protected List<SpriteRenderer> m_suppliesNeededIcons = new List<SpriteRenderer>();
-    [SerializeField] protected List<SupplyItemName> m_neededSupplyItems = new List<SupplyItemName>();
+    [SerializeField] protected List<SupplyItemName> m_neededSupplyItems = new List<SupplyItemName>() {SupplyItemName.NOTHING};
     [SerializeField] protected SupplyItemName m_supplyItemOnInteraction = SupplyItemName.NOTHING;
     [SerializeField] protected SupplyItemName m_supplyItemOnCompletion = SupplyItemName.NOTHING;
 
     [SerializeField] protected List<SupplyItemName> m_neededSupplyItemsMasterList;
-    [SerializeField] protected bool m_destroySelfOnCompletion;
+    [SerializeField] protected bool m_destroySelfOnCompletion = true;
     [SerializeField] public NetworkDataObject_Item m_networkDataObjectItem { get; private set; } = new NetworkDataObject_Item();
 
     public delegate void ReportItemCompletedDelegate();
@@ -33,7 +33,7 @@ public class ItemObjective : Interactable
         SetItemObjectiveValues();
     }
 
-    public void SetItemObjectiveValues()
+    public virtual void SetItemObjectiveValues()
     {
         m_id = gameObject.GetInstanceID();
         m_neededSupplyItemsMasterList = new List<SupplyItemName>(m_neededSupplyItems);
@@ -101,8 +101,16 @@ public class ItemObjective : Interactable
     {
         m_id = id;
         m_ownerId = ownerId;
-        m_itemType = (ITEM_TYPES)(itemType);
+        SetItem((SupplyItemName)(itemType));
         m_ownerType = (ITEM_OWNER_TYPE)(ownerType);
+    }
+
+    public void SetItem(SupplyItemName name)
+    {
+        if (m_supplyItemName == name) return;
+
+        m_supplyItemName = name;
+        m_supplyItemOnCompletion = m_supplyItemName;
     }
 
     public void SetOwnerIdAndType_FromOwner(int ownerId, ITEM_OWNER_TYPE ownerType)
@@ -155,7 +163,7 @@ public class ItemObjective : Interactable
         return new List<float>() {
             m_id,
             m_ownerId,
-            (int)m_itemType,
+            (int)m_supplyItemName,
             (int)m_ownerType,
             transform.localPosition.x,
             transform.localPosition.y,
@@ -168,7 +176,7 @@ public class ItemObjective : Interactable
         m_onDestroy?.Invoke(m_id);
     }
 
-    private void DestroySelf()
+    protected void DestroySelf()
     {
         Destroy(gameObject);
     }
