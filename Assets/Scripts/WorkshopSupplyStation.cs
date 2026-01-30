@@ -34,21 +34,21 @@ public class WorkshopSupplyStation : Interactable
     }
 
 
-    public override SupplyItemName Interact(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
+    //public override SupplyItemName AttemptInteraction(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
+    //{
+    //    if (m_isUsable && suppliesNeeded.Contains(m_supplyStationResourceName))
+    //    {
+    //        m_isUsable = false;
+    //        UnhighlightSupplyIfHighlighted();
+    //        StartCoroutine(SupplyTakenCoroutine());
+    //        return m_supplyStationResourceName;
+    //    }
+    //    else
+    //        return SupplyItemName.NOTHING;
+    //}
+    public override bool CanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING)
     {
-        if (m_isUsable && suppliesNeeded.Contains(m_supplyStationResourceName))
-        {
-            m_isUsable = false;
-            UnhighlightSupplyIfHighlighted();
-            StartCoroutine(SupplyTakenCoroutine());
-            return m_supplyStationResourceName;
-        }
-        else
-            return SupplyItemName.NOTHING;
-    }
-    public override bool PlayerCanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
-    {
-        return (m_isUsable && suppliesNeeded.Contains(m_supplyStationResourceName) && supplyHeld == SupplyItemName.NOTHING);
+        return false;
     }
 
     public override Vector3 GetCenterPoint()
@@ -121,4 +121,5 @@ public class WorkshopSupplyStation : Interactable
             m_frameSpriteRenderer.sprite = m_supplyFrameDefaultSprite;
         }
     }
+
 }

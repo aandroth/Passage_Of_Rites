@@ -1,12 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using static NpcTypeData;
 using static ItemObjectiveData;
+using static NpcTypeData;
+using static UnityEditor.Progress;
 
 public class GameController : MonoBehaviour
 {
@@ -155,7 +154,8 @@ public class GameController : MonoBehaviour
         Debug.Log($"RegisterItem called on {item.m_getId()}");
         if (m_itemsDict.ContainsKey(item.m_getId()))
             return;
-
+        item.m_passthroughSetItemValues();
+        item.m_sendAttemptInteract = SendAttemptInteractToServer;
         m_itemsDict[item.m_getId()] = item;
         m_backend.SendItemRegisteredData(item);
     }
@@ -174,9 +174,14 @@ public class GameController : MonoBehaviour
         m_itemsDict.Remove(itemId);
     }
 
-    public void CreateItem(int id, string[] data)
+    public void SendAttemptInteractToServer(int id, int otherId)
     {
+        m_backend.SendAttemptInteraction(id, otherId);
+    }
 
+    public void ExecuteInteractFromServer(int id, int otherId)
+    {
+        m_itemsDict[id].m_passthroughExecuteInteract(m_itemsDict[otherId].m_getParent());
     }
 
     public void GameOwnershipChangedTo(bool becameOwner = true)
@@ -224,7 +229,7 @@ public class GameController : MonoBehaviour
         if(m_mainPlayerId != -1) m_playersDict[m_mainPlayerId].SetChangedDataToCurrentValues();
     }
 
-    private void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode)
+    public void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode)
     {
         if (this == Instance) {
             m_game = GameObject.FindAnyObjectByType<Game>();
@@ -232,7 +237,6 @@ public class GameController : MonoBehaviour
             {
                 m_game.m_skipIntro = m_skipGameIntros;
                 m_game.m_isGameOwner = () => { return m_isGameOwner; };
-                m_backend.SignalReadinessToServer(m_mainPlayerId);
                 if (scene.name == m_titleSceneName && m_mainPlayerId != -1 && m_playersDict.ContainsKey(m_mainPlayerId))
                 {
                     m_game.SendNameToTitleSceneController(m_playersDict[m_mainPlayerId].m_nameTextMesh.text);
@@ -248,6 +252,7 @@ public class GameController : MonoBehaviour
                                                           DeregisterItem,
                                                           () => { return m_isGameOwner; });
                 }
+                m_backend.SignalReadinessToServer(m_mainPlayerId);
             }
         }
     }
@@ -320,12 +325,14 @@ public class GameController : MonoBehaviour
                     GameOwnershipChangedTo(serverData[2] == "t" ? true : false);
                 break;
             case "Load_Level":
-                if (serverData.Length >= 2)
+                if (SceneManager.GetSceneByBuildIndex(int.Parse(serverData[1])).name != SceneManager.GetActiveScene().name)
                 {
                     int levelIndex = int.Parse(serverData[1]);
                     if (levelIndex == 0 && m_backend != null && m_backend.m_connected) { m_backend?.CancelConnection(); }
                     SceneManager.LoadScene(levelIndex);
                 }
+                else
+                    OnLevelFinishedLoading(SceneManager.GetActiveScene(), LoadSceneMode.Single);
                 break;
             case "Start_Intro":
                 if (serverData.Length >= 2)
@@ -395,6 +402,10 @@ public class GameController : MonoBehaviour
                 break;
             case "Set_Interval":
                 SetInterval(id, serverData);
+                break;
+            case "Execute_Interact":
+                int otherId = int.Parse(serverData[2]);
+                ExecuteInteractFromServer(id, otherId);
                 break;
         }
     }

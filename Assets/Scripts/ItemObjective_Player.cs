@@ -18,8 +18,8 @@ public class ItemObjective_Player : ItemObjective
     public bool m_mouseColliderFrozen = false;
     [SerializeField] private bool m_mouseIsControllable = false;
 
-    public delegate void PlayerCallsInteractOnItemObjectiveDelegate(string s);
-    public PlayerCallsInteractOnItemObjectiveDelegate m_playerCallsInteractOnItemObjective;
+    public delegate void DazedCallbackDelegate();
+    public DazedCallbackDelegate m_dazedCallback;
 
 
     public override void Start()
@@ -45,50 +45,51 @@ public class ItemObjective_Player : ItemObjective
 
             if (Input.GetMouseButtonUp(0))
             {
-                AttemptInteraction();
+                Debug.Log("MOuse Click");
+                if (m_interactablesInPlayerRangeAndMouseRange.Count > 0)
+                {
+                    Interactable closestInteractable = GetClosestInteractableFromInteractablesList();
+                    Debug.Log($"Closest in range is {closestInteractable.gameObject.name}");
+                    if(closestInteractable.m_serverlessInteract) ActivateAndSetSupplyItem(closestInteractable.Interact(m_supplyItemName, true));
+                    else AttemptInteraction(closestInteractable);
+                }
             }
         }
     }
 
-    public override SupplyItemName Interact(SupplyItemName supplyHeld, List<SupplyItemName> suppliesNeeded = null)
-    {
-        m_neededSupplyItems.Remove(supplyHeld);
-        if (IsObjectiveMet())
-        {
-            m_reportItemCompleted?.Invoke();
-            m_neededSupplyItems = new List<SupplyItemName>(m_neededSupplyItemsMasterList);
-            if (m_destroySelfOnCompletion) DestroySelf();
-            return m_supplyItemOnCompletion;
-        }
-        return m_supplyItemOnInteraction;
-    }
+    public override void ExecuteInteraction(Interactable i) { ActivateAndSetSupplyItem(i.Interact(m_supplyItemName, true)); }
 
-    public void AssignNeededSupplyItems(List<SupplyItemName> neededSuppliesList)
+    public override SupplyItemName Interact(SupplyItemName s = SupplyItemName.NOTHING, bool isFromPlayer = false)
     {
-        m_neededSupplyItems = neededSuppliesList;
-    }
-
-    public void AttemptInteraction()
-    {
-        if (m_interactablesInPlayerRangeAndMouseRange.Count > 0)
-        {
-            Interactable closestInteractable = GetClosestInteractableFromInteractablesList();
-            if (closestInteractable.PlayerCanInteract(m_supplyItemName, m_neededSupplyItems))
-            {
-                InteractWithClosestInteractable(closestInteractable);
-            }
-        }
+        if (isFromPlayer || m_supplyItemName == SupplyItemName.NOTHING)
+            m_dazedCallback();
+        SupplyItemName temp = m_supplyItemName;
+        m_supplyItemName = s;
+        return temp;
     }
 
     public void AddInteractableToFocusListIfWithinRangeAndMouse(Interactable interactable)
     {
-        if (m_interactablesInPlayerRange.Contains(interactable) && m_mouseFollowingCollider.m_interactablesInCollider.Contains(interactable))
+        if (m_interactablesInPlayerRange.Contains(interactable) && m_mouseFollowingCollider.m_interactablesInCollider.Contains(interactable) &&
+            (InteractableIsSupplierAndHasItemPlayerNeeds(interactable)) ||
+            InteractableIsReceiverAndNeedsItemPlayerHas(interactable))
         {
             m_interactablesInPlayerRangeAndMouseRange.Add(interactable);
             interctablesCount = m_interactablesInPlayerRangeAndMouseRange.Count;
             _ = GetClosestInteractableFromInteractablesList();
         }
     }
+
+    public bool InteractableIsSupplierAndHasItemPlayerNeeds(Interactable interactable)
+    {
+        return interactable.IsSupplier() && CanInteract(interactable.GetItem());
+    }
+
+    public bool InteractableIsReceiverAndNeedsItemPlayerHas(Interactable interactable)
+    {
+        return !interactable.IsSupplier() && interactable.CanInteract(m_supplyItemName);
+    }
+
 
     public void RemoveInteractableIfInFocusList(Interactable interactable)
     {
@@ -124,7 +125,8 @@ public class ItemObjective_Player : ItemObjective
 
     public void InteractWithClosestInteractable(Interactable closestInteractable)
     {
-        // Send Item_Interaction to server
+        //Send Item_Interaction to server
+
 
         //if (closestInteractable.IsSupplier())
         //    ActivateAndSetSupplyItem(closestInteractable.Interact(m_supplyItemName, m_neededSupplyItems));

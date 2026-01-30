@@ -114,6 +114,7 @@ public abstract class Game : MonoBehaviour
 
     public virtual void SetItemSpawnerRequestDelegates(RequestServerRegisterItemDelegate Register, Action<int> Deregister, Func<bool> IsOwner)
     {
+        m_requestServerRegisterItem = Register;
         Debug.Log("Setting item spawner request delegates in Game");
         for (int i = 0; i < m_npcSpawners.Count; ++i)
         {

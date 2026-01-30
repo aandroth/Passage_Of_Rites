@@ -35,16 +35,16 @@ public class OtherPlayerSupplyItem : Interactable, IAccessibleSupplyItem
         return m_centerPoint.transform.position;
     }
 
-    public override SupplyItemName Interact(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
-    {
-        if (m_isUsable && suppliesNeeded.Contains(m_supplyStationResourceName))
-        {
-            var supplyName = SupplyStolen();
-            return supplyName;
-        }
-        else
-            return SupplyItemName.NOTHING;
-    }
+    //public override SupplyItemName AttemptInteraction(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
+    //{
+    //    if (m_isUsable && suppliesNeeded.Contains(m_supplyStationResourceName))
+    //    {
+    //        var supplyName = SupplyStolen();
+    //        return supplyName;
+    //    }
+    //    else
+    //        return SupplyItemName.NOTHING;
+    //}
 
     public void HighlightSupplyIfNeeded()
     {
@@ -87,11 +87,9 @@ public class OtherPlayerSupplyItem : Interactable, IAccessibleSupplyItem
         UnhighlightSupplyIfHighlighted();
     }
 
-    public override bool PlayerCanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
+    public override bool CanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING)
     {
-        return (m_isUsable && 
-            suppliesNeeded.Contains(m_supplyStationResourceName) && 
-            supplyHeld == SupplyItemName.NOTHING);
+        return false;
     }
 
     public SupplyItemName SupplyStolen()

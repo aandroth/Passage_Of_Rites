@@ -99,12 +99,7 @@ public class PlayerStation : Interactable
         m_playerInRange = false;
     }
 
-    public override SupplyItemName Interact(SupplyItemName supplyHeld, List<SupplyItemName> suppliesNeeded = null)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public override bool PlayerCanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
+    public override bool CanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING)
     {
         throw new System.NotImplementedException();
     }
@@ -113,4 +108,5 @@ public class PlayerStation : Interactable
     {
         throw new System.NotImplementedException();
     }
+
 }

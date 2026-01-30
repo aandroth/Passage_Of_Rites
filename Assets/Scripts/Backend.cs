@@ -4,6 +4,7 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
+using static ItemObjectiveData;
 
 public class Backend : MonoBehaviour
 {
@@ -191,6 +192,8 @@ public class Backend : MonoBehaviour
     }
     public void ServerPing()
     {
+        if (pingText == null) return;
+
         pingTiming += (float)Time.timeAsDouble - pingTimePrev;
         pingTimePrev = (float)Time.timeAsDouble;
         ++pings;
@@ -366,14 +369,24 @@ public class Backend : MonoBehaviour
 
     public void SendItemObjectiveChangedData(NetworkDataObject_Item itemData)
     {
-        string changes = itemData.GetChangedData();
-        if (changes != "Unchanged")
+        if (itemData == null) return;
+
+        try
         {
-            changes = $"Update_ItemObjective{changes}";
-            Debug.Log($"Sending: {changes}");
-            var bytes = System.Text.Encoding.UTF8.GetBytes(changes);
-            m_webSocket?.Send(bytes);
-            itemData.SetChangedDataToCurrentValues();
+            string changes = "Unchanged";
+            changes = itemData.GetChangedData();
+            if (changes != "Unchanged")
+            {
+                changes = $"Update_ItemObjective{changes}";
+                Debug.Log($"Sending: {changes}");
+                var bytes = System.Text.Encoding.UTF8.GetBytes(changes);
+                m_webSocket?.Send(bytes);
+                itemData.SetChangedDataToCurrentValues();
+            }
+        }
+        catch(MissingReferenceException e)
+        {
+            Debug.LogWarning($"Error sending item changed data: {e}");
         }
     }
 
@@ -381,6 +394,14 @@ public class Backend : MonoBehaviour
     {
         var data = itemData.GetAllData();
         string dataAsString = $"Register_Item{data}";
+        Debug.Log($"Sending: {dataAsString}");
+        var bytes = System.Text.Encoding.UTF8.GetBytes(dataAsString);
+        m_webSocket?.Send(bytes);
+    }
+
+    public void SendAttemptInteraction(int playerId, int itemId)
+    {
+        string dataAsString = $"Attempt_Interact,{playerId},{itemId}";
         Debug.Log($"Sending: {dataAsString}");
         var bytes = System.Text.Encoding.UTF8.GetBytes(dataAsString);
         m_webSocket?.Send(bytes);
@@ -470,6 +491,7 @@ public class Backend : MonoBehaviour
             case "Update_Player":
             case "Update_Npc":
             case "Update_Item":
+            case "Execute_Interact":
             case "Set_Interval":
                 SendServerDataToGameController(data, action, playerData);
                 break;

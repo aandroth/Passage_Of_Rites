@@ -12,7 +12,7 @@ public class MouseFollowingCollider : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        Debug.Log($"OnTriggerEnter2D in MouseFollowingCollider, found {collision.gameObject.name}");
+        //Debug.Log($"OnTriggerEnter2D in MouseFollowingCollider, found {collision.gameObject.name}");
         Interactable interactable = collision.gameObject.GetComponent<Interactable>();
         if (interactable != null)
         {

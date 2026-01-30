@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using static ItemObjectiveData;
 
 public class RatCatchGame : Game
 {
@@ -185,6 +186,9 @@ public class RatCatchGame : Game
             m_playerControls = playerControls;
             m_mainPlayerRatCageIdx = id;
             m_mainPlayerRatCage.transform.position = m_ratCageLocations[id].position;
+            m_playerControls.AssignNeededSuppliesToPlayerSupplyItem(new List<SupplyItemName>() {SupplyItemName.RATS});
+            m_playerControls.SetItemValues();
+            m_requestServerRegisterItem(m_playerControls.SendItemForGameConrtollerRegister());
         }
         else
         {

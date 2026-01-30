@@ -66,9 +66,9 @@ public abstract class Spawner : MonoBehaviour
     public static ItemObjective SpawnItemObjectiveFromData(string[] data)
     {
         Vector2 spawnPosition = new Vector2(float.Parse(data[5]), float.Parse(data[6]));
-        ItemObjective newObject = Instantiate(m_supplyItemNameToPrefab[(SupplyItemName)int.Parse(data[3])], spawnPosition, Quaternion.identity).GetComponent<ItemObjective>();
-        newObject.FillNetworkDataItemObjectDelegates();
-        newObject.m_networkDataObjectItem.PutAllData(data);
-        return newObject;
+        ItemObjective newItem = Instantiate(m_supplyItemNameToPrefab[(SupplyItemName)int.Parse(data[3])], spawnPosition, Quaternion.identity).GetComponent<ItemObjective>();
+        newItem.FillNetworkDataItemObjectDelegates();
+        newItem.m_networkDataObjectItem.PutAllData(data);
+        return newItem;
     }
 }

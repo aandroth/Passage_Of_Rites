@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -84,7 +85,7 @@ public class NpcWander : MonoBehaviour
         FillNetworkDataNpcObjectDelegates();
     }
 
-    public void SetItemObjectValues()
+    public void SetItemObjectValues(ItemObjective.OnDestroyDelegate deregisterFromGameController)
     {
         if (m_npcItem == null) return;
 
@@ -95,6 +96,8 @@ public class NpcWander : MonoBehaviour
         m_npcItem.m_reportItemCompleted = NpcItemWasCompleted;
         m_npcItem.FillNetworkDataItemObjectDelegates();
         m_npcItem.m_networkDataObjectItem.GetAllData();
+        m_npcItem.m_networkDataObjectItem.SetChangedDataToCurrentValues();
+        m_npcItem.m_onDestroy = deregisterFromGameController;
     }
 
     public void StartWandering()
@@ -121,7 +124,7 @@ public class NpcWander : MonoBehaviour
             CorrectFacing();
 
             // run in that direction for some time
-            float runTime = Random.Range(m_runTimeMin, m_runTimeMax);
+            float runTime = UnityEngine.Random.Range(m_runTimeMin, m_runTimeMax);
             PlayMovingCycle();
             while (runTime > 0f)
             {
@@ -130,13 +133,13 @@ public class NpcWander : MonoBehaviour
                 yield return null;
             }
             PlayIdleCycle();
-            yield return new WaitForSeconds(Random.Range(m_waitTimeMin, m_waitTimeMax)); // Adjust spawn interval as needed
+            yield return new WaitForSeconds(UnityEngine.Random.Range(m_waitTimeMin, m_waitTimeMax)); // Adjust spawn interval as needed
         }
     }
 
     private void ChangeToRandomDirection()
     {
-        m_wanderDirection = Random.insideUnitCircle.normalized;
+        m_wanderDirection = UnityEngine.Random.insideUnitCircle.normalized;
     }
 
     private void PlayIdleCycle()

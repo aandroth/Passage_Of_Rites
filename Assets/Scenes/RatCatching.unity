@@ -3174,9 +3174,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_gameController: {fileID: 819118122}
+  m_backend: {fileID: 0}
   m_playerName: FAKER_007
   m_id: 1
-  m_numberOfOtherPlayers: 3
+  m_numberOfOtherPlayers: 0
+  m_fakeServer: {fileID: 1708902955}
 --- !u!4 &1099400351
 Transform:
   m_ObjectHideFlags: 0
@@ -4709,6 +4711,54 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1708902954
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1708902956}
+  - component: {fileID: 1708902955}
+  m_Layer: 0
+  m_Name: FakeServer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1708902955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1708902954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e75b8cae831f6464e86543136e97d4e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_serverPath: C:\Users\aandr\Desktop\Passage_of_Rites_Server\
+  m_serverStartPs1File: ServerStart.ps1
+  m_serverKillCommand: 
+  m_backend: {fileID: 0}
+--- !u!4 &1708902956
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1708902954}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.768109, y: 8.920464, z: -0.056658898}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1720688979
 GameObject:
   m_ObjectHideFlags: 0
@@ -5860,8 +5910,28 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2584621976946764917, guid: f22da93405cc0db47adf4c8207f9292a, type: 3}
+      propertyPath: m_isSupplier
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2584621976946764917, guid: f22da93405cc0db47adf4c8207f9292a, type: 3}
+      propertyPath: m_supplyItemName
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2584621976946764917, guid: f22da93405cc0db47adf4c8207f9292a, type: 3}
       propertyPath: m_isHighlightable
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2584621976946764917, guid: f22da93405cc0db47adf4c8207f9292a, type: 3}
+      propertyPath: 'm_neededSupplyItems.Array.data[0]'
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2584621976946764917, guid: f22da93405cc0db47adf4c8207f9292a, type: 3}
+      propertyPath: m_neededSupplyItemsMasterList.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2584621976946764917, guid: f22da93405cc0db47adf4c8207f9292a, type: 3}
+      propertyPath: 'm_neededSupplyItemsMasterList.Array.data[0]'
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 7662436557946807250, guid: f22da93405cc0db47adf4c8207f9292a, type: 3}
       propertyPath: m_Name
@@ -5895,3 +5965,4 @@ SceneRoots:
   - {fileID: 1561596422}
   - {fileID: 7653856076858765206}
   - {fileID: 6205943370057419306}
+  - {fileID: 1708902956}

@@ -37,9 +37,10 @@ public class PlayerControls : MonoBehaviour
     public bool m_playerIsControllable = false;
 
 
-    [SerializeField] PlayerSupplyItem m_playerSupplyItem;
-    [SerializeField] OtherPlayerSupplyItem m_otherPlayerSupplyItem;
-    [SerializeField] IAccessibleSupplyItem m_accessibleSupplyItem;
+    //[SerializeField] PlayerSupplyItem m_playerSupplyItem;
+    [SerializeField] ItemObjective_Player m_playerSupplyItem;
+    [SerializeField] ItemObjective m_otherPlayerSupplyItem;
+    [SerializeField] ItemObjective m_accessibleSupplyItem;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -117,14 +118,16 @@ public class PlayerControls : MonoBehaviour
         {
             m_isMainPlayer = true;
             m_accessibleSupplyItem = m_playerSupplyItem;
-            m_otherPlayerSupplyItem.gameObject.SetActive(false);
+            Debug.Log("Set as main player");
+            //m_otherPlayerSupplyItem.gameObject.SetActive(false);
         }
         else
         {
             m_isMainPlayer = false;
             m_accessibleSupplyItem = m_otherPlayerSupplyItem;
-            m_playerSupplyItem.gameObject.SetActive(false);
-            m_otherPlayerSupplyItem.m_playerControlsDazedCallback = Dazed;
+            Debug.Log("Set as other player");
+            //m_playerSupplyItem.gameObject.SetActive(false);
+            //m_otherPlayerSupplyItem.m_playerControlsDazedCallback = Dazed;
         }
     }
 
@@ -369,5 +372,16 @@ public class PlayerControls : MonoBehaviour
     {
         if (m_animatorBody != null && !m_animatorBody.GetCurrentAnimatorStateInfo(0).IsName(m_idleCycleName))
             m_animatorBody.Play(m_idleCycleName);
+    }
+
+    public void SetItemValues()
+    {
+        m_playerSupplyItem.SetItemObjectiveValues();
+        m_playerSupplyItem.FillNetworkDataItemObjectDelegates();
+    }
+
+    public NetworkDataObject_Item SendItemForGameConrtollerRegister()
+    {
+        return m_playerSupplyItem.m_networkDataObjectItem;
     }
 }

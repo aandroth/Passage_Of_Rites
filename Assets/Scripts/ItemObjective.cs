@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Unity.VisualScripting;
 using UnityEngine;
 using static ItemObjectiveData;
@@ -6,9 +7,7 @@ using static ItemObjectiveData;
 public class ItemObjective : Interactable
 {
 
-    [SerializeField] public int m_id { get; protected set; }
     [SerializeField] public int m_ownerId = -1;
-    [SerializeField] protected SupplyItemName m_supplyItemName = SupplyItemName.POT_LID;
     [SerializeField] public ITEM_OWNER_TYPE m_ownerType = ITEM_OWNER_TYPE.SELF;
     [SerializeField] protected ITEM_STATE m_state = ITEM_STATE.NONE;
 
@@ -48,6 +47,9 @@ public class ItemObjective : Interactable
         m_networkDataObjectItem.m_getCurrentState = () => { return m_state; };
         m_networkDataObjectItem.m_updateTransform = UpdateTransformValues;
         m_networkDataObjectItem.m_updateState = UpdateState;
+        m_networkDataObjectItem.m_getParent = () => { return this; };
+        m_networkDataObjectItem.m_passthroughExecuteInteract = ExecuteInteraction;
+        m_networkDataObjectItem.m_passthroughSetItemValues = SetItemObjectiveValues;
 
         m_networkDataObjectItem.m_prevData.m_prevTransformData = new List<float>() { 0f, 0f, 0f };
         m_networkDataObjectItem.m_prevData.m_state = 0;
@@ -55,7 +57,23 @@ public class ItemObjective : Interactable
         m_networkDataObjectItem.SetChangedDataToCurrentValues();
     }
 
-    // abstract method to check if the objective is met
+
+    public void AssignNeededSupplyItems(List<SupplyItemName> neededSuppliesList)
+    {
+        Debug.Log("AssignNeededSupplyItems");
+        foreach (var s in m_neededSupplyItems)
+        {
+            Debug.Log("CanInteract: Needs " + s);
+        }
+        m_neededSupplyItems = new List<SupplyItemName>(neededSuppliesList);
+
+        Debug.Log("After assignment");
+        foreach (var s in m_neededSupplyItems)
+        {
+            Debug.Log("CanInteract: Needs " + s);
+        }
+    }
+
     public virtual bool IsObjectiveMet()
     {
         return m_neededSupplyItems.Count == 0;
@@ -65,8 +83,14 @@ public class ItemObjective : Interactable
     {
         return gameObject.transform.position;
     }
-    public override bool PlayerCanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
+    public override bool CanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING)
     {
+        foreach( var s in m_neededSupplyItems)
+        {
+            Debug.Log("CanInteract: Needs " + s);
+        }
+        Debug.Log("Supply is: " + supplyHeld);
+
         return m_neededSupplyItems.Contains(supplyHeld);
     }
     public void SetDestroySelfUponCompletion(bool b)
@@ -74,9 +98,29 @@ public class ItemObjective : Interactable
         m_destroySelfOnCompletion = b;
     }
 
-    public override SupplyItemName Interact(SupplyItemName supplyHeld, List<SupplyItemName> suppliesNeeded = null)
+    public virtual void AttemptInteraction(Interactable interactable) 
     {
-        m_neededSupplyItems.Remove(supplyHeld);
+        if (!interactable.IsSupplier() || m_neededSupplyItems.Contains(interactable.GetItem()))
+        {
+            Debug.Log("ItemObject: Attempting interaction with " + interactable.gameObject.name);
+            m_networkDataObjectItem.m_sendAttemptInteract(m_id, interactable.m_id);
+        }
+    }
+
+    public override void ExecuteInteraction(Interactable interactable)
+    {
+        m_neededSupplyItems.Remove(interactable.Interact(m_supplyItemName));
+        if (IsObjectiveMet())
+        {
+            m_reportItemCompleted?.Invoke();
+            m_neededSupplyItems = new List<SupplyItemName>(m_neededSupplyItemsMasterList);
+            if (m_destroySelfOnCompletion) DestroySelf();
+        }
+        m_state = ITEM_STATE.NONE;
+    }
+    public override SupplyItemName Interact(SupplyItemName s = SupplyItemName.NOTHING, bool isFromPlayer = false)
+    {
+        m_neededSupplyItems.Remove(s);
         if (IsObjectiveMet())
         {
             m_reportItemCompleted?.Invoke();
@@ -84,6 +128,7 @@ public class ItemObjective : Interactable
             if (m_destroySelfOnCompletion) DestroySelf();
             return m_supplyItemOnCompletion;
         }
+        m_state = ITEM_STATE.NONE;
         return m_supplyItemOnInteraction;
     }
 
@@ -103,14 +148,6 @@ public class ItemObjective : Interactable
         m_ownerId = ownerId;
         SetItem((SupplyItemName)(itemType));
         m_ownerType = (ITEM_OWNER_TYPE)(ownerType);
-    }
-
-    public void SetItem(SupplyItemName name)
-    {
-        if (m_supplyItemName == name) return;
-
-        m_supplyItemName = name;
-        m_supplyItemOnCompletion = m_supplyItemName;
     }
 
     public void SetOwnerIdAndType_FromOwner(int ownerId, ITEM_OWNER_TYPE ownerType)

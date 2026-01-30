@@ -31,6 +31,16 @@ public class NetworkDataObject_Item
     public delegate void PlayerBecameGameOwnerDelegate();
     public PlayerBecameGameOwnerDelegate m_playerBecameGameOwner;
 
+    public delegate ItemObjective GetParentDelegate();
+    public GetParentDelegate m_getParent;
+    public delegate void SendAttemptInteractDelegate(int i, int o);
+    public SendAttemptInteractDelegate m_sendAttemptInteract;
+
+    public delegate void PassthroughExecuteInteractDelegate(Interactable i);
+    public PassthroughExecuteInteractDelegate m_passthroughExecuteInteract;
+    public delegate void PassthroughSetItemValuesDelegate();
+    public PassthroughSetItemValuesDelegate m_passthroughSetItemValues;
+
     public float positionChangeThreshhold = 10f;
     public void Start()
     {
@@ -103,13 +113,13 @@ public class NetworkDataObject_Item
         if ((changedDataList[4] != "") || (changedDataList[5] != "") || (changedDataList[6] != ""))
         {
             List<float?> possibleTransformChanges = new List<float?>() { null, null, null };
-            if (changedDataList[4] != "") possibleTransformChanges[0] = float.Parse(changedDataList[4]);
-            if (changedDataList[5] != "") possibleTransformChanges[1] = float.Parse(changedDataList[5]);
-            if (changedDataList[6] != "") possibleTransformChanges[2] = float.Parse(changedDataList[6]);
+            if (changedDataList[5] != "") possibleTransformChanges[0] = float.Parse(changedDataList[5]);
+            if (changedDataList[6] != "") possibleTransformChanges[1] = float.Parse(changedDataList[6]);
+            if (changedDataList[7] != "") possibleTransformChanges[2] = float.Parse(changedDataList[7]);
             m_updateTransform(possibleTransformChanges);
         }
 
-        if (changedDataList[7] != "") m_updateState(int.Parse(changedDataList[7]));
+        if (changedDataList[8] != "") m_updateState(int.Parse(changedDataList[8]));
     }
 
     public void PutAllData(string[] fullDataList)
@@ -127,6 +137,11 @@ public class NetworkDataObject_Item
         m_updateTransform(transformValues);
 
         m_updateState(int.Parse(fullDataList[8]));
+    }
+
+    public void ExecuteInteract(Interactable inter)
+    {
+        m_passthroughExecuteInteract(inter);
     }
 
     public void MarkAsDestroyed()

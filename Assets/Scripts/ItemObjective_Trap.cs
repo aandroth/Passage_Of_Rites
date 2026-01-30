@@ -62,17 +62,17 @@ public class ItemObjective_Trap : ItemObjective
         Debug.Log($"m_finishedTrapSpriteRenderer: {m_finishedTrapSpriteRenderer.gameObject}");
     }
 
-    public override SupplyItemName Interact(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
-    {
-        CheckOffSupply(supplyHeld);
-        ++m_suppliesGatheredCount;
-        if (IsObjectiveMet())
-        {
-            StartCoroutine(CompleteTrapCoroutine());
-            return m_supplyItemOnCompletion;
-        }
-        return m_supplyItemOnInteraction;
-    }
+    //public override SupplyItemName AttemptInteraction(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null)
+    //{
+    //    CheckOffSupply(supplyHeld);
+    //    ++m_suppliesGatheredCount;
+    //    if (IsObjectiveMet())
+    //    {
+    //        StartCoroutine(CompleteTrapCoroutine());
+    //        return m_supplyItemOnCompletion;
+    //    }
+    //    return m_supplyItemOnInteraction;
+    //}
     public override bool IsObjectiveMet()
     {
         return m_suppliesGatheredCount == m_suppliesNeededIcons.Count;

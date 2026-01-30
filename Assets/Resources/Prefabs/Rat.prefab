@@ -426,12 +426,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b8591fc0bfaa3040acc0b9a02d4a2a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_isSupplier: 1
   m_isHighlightable: 1
   m_playerInRange: 0
   m_highlightSprite: {fileID: 1442527614280478999}
-  m_ownerId: -1
+  m_interactionCooldown: 0
   m_supplyItemName: 8
+  m_ownerId: -1
   m_ownerType: 2
   m_state: 0
   m_suppliesNeededIcons: []

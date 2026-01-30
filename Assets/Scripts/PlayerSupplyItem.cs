@@ -56,7 +56,7 @@ public class PlayerSupplyItem : MonoBehaviour, IAccessibleSupplyItem
         if (m_interactablesInPlayerRangeAndMouseRange.Count > 0)
         {
             Interactable closestInteractable = GetClosestInteractableFromInteractablesList();
-            if (closestInteractable.PlayerCanInteract(m_supplyStationResourceName, m_neededSuppliesList))
+            if (closestInteractable.CanInteract(m_supplyStationResourceName))
             {
                 InteractWithClosestInteractable(closestInteractable);
             }
@@ -107,15 +107,15 @@ public class PlayerSupplyItem : MonoBehaviour, IAccessibleSupplyItem
 
     public void InteractWithClosestInteractable(Interactable closestInteractable)
     {
-        if(closestInteractable.IsSupplier())
-            ActivateAndSetSupplyItem(closestInteractable.Interact(m_supplyStationResourceName, m_neededSuppliesList));
-        else
-        {
-            closestInteractable.Interact(m_supplyStationResourceName);
-            if(m_neededSuppliesList.Contains(m_supplyStationResourceName))
-                m_neededSuppliesList[m_neededSuppliesList.IndexOf(m_supplyStationResourceName)] = SupplyItemName.NOTHING;
-            DeactivateAndRemoveSupplyItem();
-        }
+        //if(closestInteractable.IsSupplier())
+        //    ActivateAndSetSupplyItem(closestInteractable.AttemptInteraction(m_supplyStationResourceName, m_neededSuppliesList));
+        //else
+        //{
+        //    closestInteractable.AttemptInteraction(m_supplyStationResourceName);
+        //    if(m_neededSuppliesList.Contains(m_supplyStationResourceName))
+        //        m_neededSuppliesList[m_neededSuppliesList.IndexOf(m_supplyStationResourceName)] = SupplyItemName.NOTHING;
+        //    DeactivateAndRemoveSupplyItem();
+        //}
     }
 
     public void ActivateAndSetSupplyItem(SupplyItemName supplyName)

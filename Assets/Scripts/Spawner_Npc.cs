@@ -19,7 +19,6 @@ public class Spawner_Npc : Spawner
             SendNetworkDataObjectToServer(newNpc.m_networkDataObjectNpc);
             if (newNpc.HasItem())
             {
-                newNpc.SetItemObjectValues();
                 SendItemNetworkDataObjectToServer(newNpc.GetNpcItem().m_networkDataObjectItem);
             }
         }
@@ -36,8 +35,10 @@ public class Spawner_Npc : Spawner
         newNpc.SetNpcValues();
         newNpc.SetIndexOfSpawnerInGame(m_indexOfSpawnerInGame);
         newNpc.FillNetworkDataNpcObjectDelegates();
-        if (newNpc.HasItem()) newNpc.SetItemObjectValues();
+        if (newNpc.HasItem()) newNpc.SetItemObjectValues((int i) => { m_deregisterItemFromGameController(i); });
         newNpc.m_onDestroy = DestroyAndSendToServer;
+
+
         ++m_spawnCount;
 
         if (m_isGameOwner != null && m_isGameOwner())

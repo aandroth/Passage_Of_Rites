@@ -4,12 +4,22 @@ using static ItemObjectiveData;
 
 public abstract class Interactable : MonoBehaviour
 {
-    [SerializeField] bool m_isSupplier = true;
+    [SerializeField] public int m_id { get; protected set; }
+    [SerializeField] private bool m_isSupplier = true;
+    [SerializeField] public bool m_serverlessInteract = false;
     [SerializeField] bool m_isHighlightable = true;
     public bool m_playerInRange = false;
     [SerializeField] protected SpriteRenderer m_highlightSprite;
-    public abstract SupplyItemName Interact(SupplyItemName supplyHeld, List<SupplyItemName> suppliesNeeded = null);
-    public abstract bool PlayerCanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING, List<SupplyItemName> suppliesNeeded = null);
+    [SerializeField] protected float m_interactionCooldown;
+    [SerializeField] protected SupplyItemName m_supplyItemName = SupplyItemName.POT_LID;
+
+    public virtual void ExecuteInteraction(Interactable i) { m_supplyItemName = i.Interact(m_supplyItemName); }
+    public virtual SupplyItemName Interact(SupplyItemName s = SupplyItemName.NOTHING, bool isFromPlayer = false) { SupplyItemName temp = m_supplyItemName;
+                                                                                        m_supplyItemName = s;
+                                                                                        return temp; }
+    public virtual void SetItem(SupplyItemName itemName = SupplyItemName.NOTHING){ m_supplyItemName = itemName; }
+    public virtual SupplyItemName GetItem(){ return m_supplyItemName; }
+    public abstract bool CanInteract(SupplyItemName supplyHeld = SupplyItemName.NOTHING);
     public virtual void OnFocus() { }
     public virtual void OffFocus() { }
 
